@@ -23,5 +23,5 @@ dist/
 # Internal working docs (not part of the public documentation)
 docs/internal/
 
-# AI Agents
-.claude
+# AI Agents — solo el .claude de la raíz del repo; src/adapters/*/.claude debe ser trackeado
+/.claude
