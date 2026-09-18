@@ -1,0 +1,33 @@
+package domain
+
+import "errors"
+
+var (
+	ErrWorkItemNotFound         = errors.New("work item not found")
+	ErrWorkItemAlreadyExists    = errors.New("work item already exists")
+	ErrWorkflowNotFound         = errors.New("workflow not found")
+	ErrPhaseNotFound            = errors.New("phase not found in workflow or work item")
+	ErrPhaseNotAwaitingApproval = errors.New("phase is not awaiting approval")
+	ErrPhaseBlocked             = errors.New("phase is blocked and cannot be started")
+	ErrInvalidTransition        = errors.New("invalid phase transition")
+	ErrHumanActorRequired       = errors.New("a human actor is required")
+	ErrApprovalNotAllowed       = errors.New("phase does not allow approval")
+	ErrWorkItemCannotComplete   = errors.New("work item cannot be completed")
+	ErrInvalidIdentifier        = errors.New("invalid identifier")
+	ErrInvalidActor             = errors.New("invalid actor")
+	ErrInvalidPath              = errors.New("invalid path")
+	ErrSchemaValidation         = errors.New("schema validation failed")
+	ErrInvalidWorkflow          = errors.New("invalid workflow")
+	ErrInvalidWorkItem          = errors.New("invalid work item")
+	ErrInvalidEntryPoint        = errors.New("invalid workflow entry point")
+	ErrInvalidExternalArtifact  = errors.New("invalid external artifact")
+	ErrConcurrentModification   = errors.New("concurrent work item modification")
+	ErrWorkItemLocked           = errors.New("work item is being modified")
+	ErrOperationAlreadyApplied  = errors.New("operation already applied")
+	ErrValidationFailed         = errors.New("validation failed")
+	ErrWorkItemCannotArchive    = errors.New("work item cannot be archived")
+	ErrWorkItemAlreadyArchived  = errors.New("work item is already archived")
+	ErrArchiveConflict          = errors.New("archive storage conflict")
+	ErrAdapterNotFound          = errors.New("adapter not found")
+	ErrAdapterInstallConflict   = errors.New("adapter installation conflict")
+)

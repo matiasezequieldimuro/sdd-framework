@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sdd-harness.local/schemas/work-item.schema.json",
+  "title": "SDD Work Item",
+  "type": "object",
+  "required": ["schema_version", "kind", "id", "revision", "title", "type", "status", "created_at", "created_by", "workflow", "input", "phases", "traceability"],
+  "properties": {
+    "schema_version": { "const": "0.1" },
+    "kind": { "const": "work-item" },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "type": { "type": "string" },
+    "status": { "enum": ["active", "completed", "archived", "cancelled"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "created_by": { "$ref": "#/$defs/actor" },
+    "workflow": {
+      "type": "object",
+      "required": ["id", "version", "entry_phase"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "version": { "type": "string", "minLength": 1 },
+        "entry_phase": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "required": ["source", "summary"],
+      "properties": {
+        "source": { "enum": ["user_prompt", "external_artifact", "imported_artifact"] },
+        "summary": { "type": "string" },
+        "references": { "type": "array", "items": { "type": "string" } },
+        "external_artifact": {
+          "type": "object",
+          "required": ["artifact", "path", "sha256"],
+          "properties": {
+            "artifact": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+            "path": { "type": "string", "minLength": 1 },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "source": { "const": "external_artifact" } }, "required": ["source"] },
+              "then": { "required": ["external_artifact"] }
+            },
+            {
+              "if": { "properties": { "source": { "enum": ["user_prompt", "imported_artifact"] } }, "required": ["source"] },
+              "then": { "not": { "required": ["external_artifact"] } }
+            }
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "phases": { "type": "object", "additionalProperties": { "$ref": "#/$defs/phaseState" } },
+    "approvals": { "type": "array", "items": { "$ref": "#/$defs/approval" } },
+    "traceability": { "type": "object", "required": ["events"], "properties": { "events": { "const": "events.jsonl" }, "related_work_items": { "type": "array", "items": { "type": "string" } }, "baseline_specs": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
+    "observability": { "$ref": "#/$defs/observability" }
+  },
+  "$defs": {
+    "actor": { "type": "object", "required": ["kind", "id"], "properties": { "kind": { "enum": ["human", "agent", "cli", "system"] }, "id": { "type": "string", "minLength": 1 } }, "additionalProperties": false },
+    "phaseState": { "type": "object", "required": ["status"], "properties": { "status": { "enum": ["not_applicable", "blocked", "ready", "in_progress", "awaiting_approval", "approved", "completed", "rejected", "accepted", "superseded"] }, "artifact": { "type": "string", "pattern": "^artifacts/(?:[a-z0-9]+(?:-[a-z0-9]+)*/)*[a-z0-9]+(?:-[a-z0-9]+)*\\.md$" } }, "additionalProperties": false },
+    "approval": { "type": "object", "required": ["phase", "status"], "properties": { "phase": { "type": "string" }, "status": { "enum": ["pending", "approved", "rejected", "superseded"] }, "by": { "$ref": "#/$defs/actor" }, "at": { "type": "string", "format": "date-time" }, "comment": { "type": "string" } }, "additionalProperties": false },
+    "observability": { "type": "object", "properties": { "token_usage": { "type": "object", "required": ["status"], "properties": { "status": { "enum": ["not_reported", "partial", "recorded"] }, "source": { "type": ["string", "null"] }, "input_tokens": { "type": ["integer", "null"], "minimum": 0 }, "output_tokens": { "type": ["integer", "null"], "minimum": 0 }, "cache_read_tokens": { "type": ["integer", "null"], "minimum": 0 }, "cache_write_tokens": { "type": ["integer", "null"], "minimum": 0 } }, "additionalProperties": false } }, "additionalProperties": false }
+  },
+  "additionalProperties": false
+}

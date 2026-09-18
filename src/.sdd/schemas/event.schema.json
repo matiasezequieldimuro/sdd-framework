@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sdd-harness.local/schemas/event.schema.json",
+  "title": "SDD Event",
+  "type": "object",
+  "required": ["schema_version", "id", "at", "work_item", "type", "actor", "data"],
+  "properties": {
+    "schema_version": { "const": "0.1" },
+    "id": { "type": "string", "minLength": 1 },
+    "at": { "type": "string", "format": "date-time" },
+    "work_item": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "type": { "type": "string", "pattern": "^[a-z_]+(?:[.-][a-z_]+)*$" },
+    "actor": { "type": "object", "required": ["kind", "id"], "properties": { "kind": { "enum": ["human", "agent", "cli", "system"] }, "id": { "type": "string", "minLength": 1 } }, "additionalProperties": false },
+    "data": { "type": "object" },
+    "correlation_id": { "type": "string" }
+  },
+  "additionalProperties": false
+}

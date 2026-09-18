@@ -1,0 +1,27 @@
+# Generated embeddings (synchronized from src/.sdd at build time)
+src/cli/embeds/default_sdd/
+src/cli/embeds/default_adapters/
+
+# Go binaries
+src/cli/sdd
+src/cli/sdd-cli
+src/cli/sdd-cli.exe
+
+# Release build output
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.env
+
+# Internal working docs (not part of the public documentation)
+docs/internal/
+
+# AI Agents
+.claude

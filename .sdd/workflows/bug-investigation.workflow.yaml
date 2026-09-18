@@ -1,0 +1,59 @@
+schema_version: "0.1"
+kind: workflow
+id: bug-investigation
+title: Bug con investigación
+work_item_type: bug
+description: Bug cuya causa raíz debe investigarse antes de planificar el fix.
+
+entry_points:
+  - phase: issue
+    accepts: [user_prompt, issue]
+  - phase: plan
+    accepts: [plan]
+
+phases:
+  - id: issue
+    produces: [issue]
+    procedure: document-issue
+    approval: none
+  - id: debugging
+    requires: [issue]
+    produces: [exploration]
+    procedure: investigate-bug
+    approval: none
+  - id: plan
+    requires: [debugging]
+    produces: [plan]
+    procedure: create-plan
+    approval: required
+  - id: implementation
+    requires: [plan]
+    produces: [implementation-report]
+    procedure: implement
+    approval: none
+    effects: [repository_write]
+  - id: verification
+    requires: [implementation]
+    produces: [verification-report]
+    procedure: verify
+    approval: none
+  - id: human-code-review
+    requires: [verification]
+    produces: [code-review-record]
+    approval: required
+  - id: archive
+    requires: [human-code-review]
+    produces: [archive-record]
+    procedure: archive
+    approval: none
+    optional: true
+    effects: [changelog_write, git_commit, git_push, pull_request]
+
+artifacts:
+  issue: { path: artifacts/issue.md, template: issue }
+  exploration: { path: artifacts/exploration.md, template: exploration }
+  plan: { path: artifacts/plan.md, template: plan }
+  implementation-report: { path: artifacts/implementation-report.md, template: implementation-report }
+  verification-report: { path: artifacts/verification-report.md, template: verification-report }
+  code-review-record: { path: artifacts/human-code-review.md, template: human-code-review }
+  archive-record: { path: artifacts/archive.md, template: archive }

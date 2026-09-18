@@ -1,0 +1,71 @@
+schema_version: "0.1"
+capabilities:
+  - id: sdd.generate-prd
+    title: Generar PRD
+    procedure: procedures/generate-prd.md
+    inputs: [work_item_id, user_input]
+    outputs: [prd]
+  - id: sdd.generate-change-request
+    title: Generar Change Request
+    procedure: procedures/generate-change-request.md
+    inputs: [work_item_id, user_input, baseline_specs]
+    outputs: [change-request]
+  - id: sdd.generate-specification
+    title: Generar especificación
+    procedure: procedures/generate-specification.md
+    inputs: [work_item_id, source_artifact, baseline_specs]
+    outputs: [specification]
+  - id: sdd.generate-plan
+    title: Generar plan de implementación
+    procedure: procedures/create-plan.md
+    inputs: [work_item_id, specification]
+    outputs: [plan]
+  - id: sdd.document-issue
+    title: Documentar issue
+    procedure: procedures/document-issue.md
+    inputs: [work_item_id, user_input]
+    outputs: [issue]
+  - id: sdd.investigate-bug
+    title: Investigar bug
+    procedure: procedures/investigate-bug.md
+    inputs: [work_item_id, issue]
+    outputs: [exploration]
+  - id: sdd.implement
+    title: Implementar cambio aprobado
+    procedure: procedures/implement.md
+    inputs: [work_item_id, plan]
+    outputs: [implementation-report]
+  - id: sdd.verify
+    title: Verificar implementación
+    procedure: procedures/verify.md
+    inputs: [work_item_id, acceptance_criteria]
+    outputs: [verification-report]
+  - id: sdd.archive
+    title: Archivar work item
+    procedure: procedures/archive.md
+    inputs: [work_item_id]
+    outputs: [archive-record]
+  - id: sdd.status
+    title: Consultar estado del work item
+    inputs: [work_item_id]
+    outputs: [manifest, next_actions]
+  - id: sdd.setup-project
+    title: Preparar proyecto para SDD
+    procedure: procedures/setup-project.md
+    inputs: [project_context]
+    outputs: [initialized_contract, installed_adapters]
+  - id: sdd.onboard-project
+    title: Documentar proyecto existente
+    procedure: procedures/onboard-project.md
+    inputs: [project_sources]
+    outputs: [project_context]
+  - id: sdd.answer-project-question
+    title: Responder consulta técnica o funcional
+    procedure: procedures/answer-project-question.md
+    inputs: [question, project_context]
+    outputs: [answer]
+  - id: sdd.research-topic
+    title: Investigar tema técnico
+    procedure: procedures/research-topic.md
+    inputs: [research_question, constraints]
+    outputs: [research_report]

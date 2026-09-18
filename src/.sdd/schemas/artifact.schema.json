@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sdd-harness.local/schemas/artifact.schema.json",
+  "title": "SDD Artifact Metadata",
+  "type": "object",
+  "required": ["schema_version", "kind", "id", "work_item", "phase", "status", "created_at", "created_by", "sources"],
+  "properties": {
+    "schema_version": { "const": "0.1" },
+    "kind": { "const": "artifact" },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "work_item": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "phase": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "status": { "enum": ["draft", "delivered", "approved", "rejected", "superseded"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "created_by": { "$ref": "#/$defs/actor" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^artifacts/(?:[a-z0-9]+(?:-[a-z0-9]+)*/)*[a-z0-9]+(?:-[a-z0-9]+)*\\.md$"
+      }
+    }
+  },
+  "$defs": {
+    "actor": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["human", "agent", "cli", "system"] },
+        "id": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

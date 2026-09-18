@@ -1,0 +1,61 @@
+schema_version: "0.1"
+kind: workflow
+id: change-request
+title: Cambio de requerimientos
+work_item_type: change-request
+description: Actualiza comportamiento existente mediante un Change Request y una especificación delta.
+
+entry_points:
+  - phase: change-request
+    accepts: [user_prompt, change-request]
+  - phase: specification
+    accepts: [specification]
+  - phase: plan
+    accepts: [plan]
+
+phases:
+  - id: change-request
+    produces: [change-request]
+    procedure: generate-change-request
+    approval: required
+  - id: specification
+    requires: [change-request]
+    produces: [specification]
+    procedure: generate-specification
+    approval: required
+  - id: plan
+    requires: [specification]
+    produces: [plan]
+    procedure: create-plan
+    approval: required
+  - id: implementation
+    requires: [plan]
+    produces: [implementation-report]
+    procedure: implement
+    approval: none
+    effects: [repository_write]
+  - id: verification
+    requires: [implementation]
+    produces: [verification-report]
+    procedure: verify
+    approval: none
+  - id: human-code-review
+    requires: [verification]
+    produces: [code-review-record]
+    approval: required
+  - id: archive
+    requires: [human-code-review]
+    produces: [archive-record]
+    procedure: archive
+    approval: none
+    optional: true
+    effects: [changelog_write, git_commit, git_push, pull_request]
+
+artifacts:
+  change-request: { path: artifacts/change-request.md, template: change-request }
+  specification: { path: artifacts/specification.md, template: specification }
+  plan: { path: artifacts/plan.md, template: plan }
+  implementation-report: { path: artifacts/implementation-report.md, template: implementation-report }
+  verification-report: { path: artifacts/verification-report.md, template: verification-report }
+  code-review-record: { path: artifacts/human-code-review.md, template: human-code-review }
+  archive-record: { path: artifacts/archive.md, template: archive }

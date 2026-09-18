@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.1",
+  "kind": "work-item",
+  "id": "fast-001-fix-typo",
+  "revision": 1,
+  "title": "Corregir typo en botón de guardar",
+  "type": "fast-change",
+  "status": "active",
+  "created_at": "2026-08-14T23:00:00Z",
+  "created_by": {
+    "kind": "human",
+    "id": "matias"
+  },
+  "workflow": {
+    "id": "fast-change",
+    "version": "0.1",
+    "entry_phase": "plan"
+  },
+  "input": {
+    "source": "user_prompt",
+    "summary": "Corregir typo en la etiqueta del botón de guardar en el perfil."
+  },
+  "phases": {
+    "plan": {
+      "status": "in_progress",
+      "artifact": "artifacts/plan.md"
+    },
+    "implementation": {
+      "status": "blocked"
+    },
+    "verification": {
+      "status": "blocked"
+    },
+    "human-code-review": {
+      "status": "blocked"
+    },
+    "archive": {
+      "status": "blocked"
+    }
+  },
+  "traceability": {
+    "events": "events.jsonl"
+  }
+}

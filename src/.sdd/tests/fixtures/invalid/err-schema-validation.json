@@ -1,0 +1,25 @@
+{
+  "kind": "invalid-kind-value",
+  "id": "feat-001-coupons",
+  "title": "Aplicar cupones de descuento en checkout",
+  "type": "feature",
+  "status": "wrong-status-value",
+  "workflow": {
+    "id": "feature-standard",
+    "version": "0.1",
+    "entry_phase": "prd"
+  },
+  "input": {
+    "source": "user_prompt",
+    "summary": "Agregar un campo en la sección de checkout para aplicar códigos de descuento."
+  },
+  "phases": {
+    "prd": {
+      "status": "in_progress",
+      "artifact": "artifacts/prd.md"
+    }
+  },
+  "traceability": {
+    "events": "events.jsonl"
+  }
+}

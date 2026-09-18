@@ -1,0 +1,45 @@
+schema_version: "0.1"
+kind: workflow
+id: fast-change
+title: Ajuste rápido
+work_item_type: fast-change
+description: Cambio acotado que parte de un input claro y comienza en el plan.
+
+entry_points:
+  - phase: plan
+    accepts: [user_prompt, plan]
+
+phases:
+  - id: plan
+    produces: [plan]
+    procedure: create-plan
+    approval: required
+  - id: implementation
+    requires: [plan]
+    produces: [implementation-report]
+    procedure: implement
+    approval: none
+    effects: [repository_write]
+  - id: verification
+    requires: [implementation]
+    produces: [verification-report]
+    procedure: verify
+    approval: none
+  - id: human-code-review
+    requires: [verification]
+    produces: [code-review-record]
+    approval: required
+  - id: archive
+    requires: [human-code-review]
+    produces: [archive-record]
+    procedure: archive
+    approval: none
+    optional: true
+    effects: [changelog_write, git_commit, git_push, pull_request]
+
+artifacts:
+  plan: { path: artifacts/plan.md, template: plan }
+  implementation-report: { path: artifacts/implementation-report.md, template: implementation-report }
+  verification-report: { path: artifacts/verification-report.md, template: verification-report }
+  code-review-record: { path: artifacts/human-code-review.md, template: human-code-review }
+  archive-record: { path: artifacts/archive.md, template: archive }

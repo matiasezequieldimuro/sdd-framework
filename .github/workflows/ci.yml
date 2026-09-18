@@ -1,0 +1,55 @@
+name: CI
+
+# Valida el motor SDD en cada push y PR hacia main o development.
+# Un merge de PR development -> main se ejecuta aqui como push a main.
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+permissions:
+  contents: read
+
+env:
+  CLI_DIR: src/cli
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: ${{ env.CLI_DIR }}/go.sum
+
+      - name: Sync embedded resources
+        working-directory: ${{ env.CLI_DIR }}
+        run: go generate ./...
+
+      - name: Check formatting
+        working-directory: ${{ env.CLI_DIR }}
+        run: |
+          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          if [ -n "${unformatted}" ]; then
+            echo "The following files are not gofmt-compliant:"
+            echo "${unformatted}"
+            exit 1
+          fi
+
+      - name: Vet
+        working-directory: ${{ env.CLI_DIR }}
+        run: go vet ./...
+
+      - name: Test
+        working-directory: ${{ env.CLI_DIR }}
+        run: go test ./... -count=1
+
+      - name: Build
+        working-directory: ${{ env.CLI_DIR }}
+        run: go build -o /tmp/sdd-cli .

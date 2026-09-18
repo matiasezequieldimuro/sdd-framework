@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1",
+  "kind": "work-item",
+  "id": "bug-002-crash-on-refresh",
+  "revision": 3,
+  "title": "Crash al refrescar la pantalla de pago",
+  "type": "bug",
+  "status": "active",
+  "created_at": "2026-08-14T23:00:00Z",
+  "created_by": {
+    "kind": "human",
+    "id": "matias"
+  },
+  "workflow": {
+    "id": "bug-investigation",
+    "version": "0.1",
+    "entry_phase": "issue"
+  },
+  "input": {
+    "source": "user_prompt",
+    "summary": "El usuario reporta que al recargar la página en el checkout, la app da un pantallazo blanco."
+  },
+  "phases": {
+    "issue": {
+      "status": "completed",
+      "artifact": "artifacts/issue.md"
+    },
+    "debugging": {
+      "status": "blocked"
+    },
+    "plan": {
+      "status": "approved",
+      "artifact": "artifacts/plan.md"
+    },
+    "implementation": {
+      "status": "blocked"
+    },
+    "verification": {
+      "status": "blocked"
+    },
+    "human-code-review": {
+      "status": "blocked"
+    },
+    "archive": {
+      "status": "blocked"
+    }
+  },
+  "approvals": [
+    {
+      "phase": "plan",
+      "status": "approved",
+      "by": {
+        "kind": "human",
+        "id": "matias"
+      },
+      "at": "2026-08-14T23:20:00Z"
+    }
+  ],
+  "traceability": {
+    "events": "events.jsonl"
+  }
+}

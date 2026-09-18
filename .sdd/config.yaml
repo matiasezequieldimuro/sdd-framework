@@ -1,0 +1,15 @@
+schema_version: "0.1"
+project:
+  id: "replace-with-project-id"
+  name: "Replace with project name"
+
+defaults:
+  workflow: feature-standard
+  artifact_language: es
+  archive_policy: optional
+
+interaction:
+  mode: team-lead # team-lead | junior
+
+observability:
+  token_usage: optional

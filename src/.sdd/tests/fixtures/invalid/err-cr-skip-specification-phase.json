@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.1",
+  "kind": "work-item",
+  "id": "cr-003-billing-info",
+  "revision": 2,
+  "title": "Agregar info de facturación en perfil",
+  "type": "change-request",
+  "status": "active",
+  "created_at": "2026-08-14T23:00:00Z",
+  "created_by": {
+    "kind": "human",
+    "id": "matias"
+  },
+  "workflow": {
+    "id": "change-request",
+    "version": "0.1",
+    "entry_phase": "change-request"
+  },
+  "input": {
+    "source": "user_prompt",
+    "summary": "Agregar campos de RUT/DNI para facturación en la cuenta."
+  },
+  "phases": {
+    "change-request": {
+      "status": "approved",
+      "artifact": "artifacts/change-request.md"
+    },
+    "specification": {
+      "status": "blocked"
+    },
+    "plan": {
+      "status": "approved",
+      "artifact": "artifacts/plan.md"
+    },
+    "implementation": {
+      "status": "blocked"
+    },
+    "verification": {
+      "status": "blocked"
+    },
+    "human-code-review": {
+      "status": "blocked"
+    },
+    "archive": {
+      "status": "blocked"
+    }
+  },
+  "approvals": [
+    {
+      "phase": "change-request",
+      "status": "approved",
+      "by": {
+        "kind": "human",
+        "id": "matias"
+      },
+      "at": "2026-08-14T23:10:00Z"
+    },
+    {
+      "phase": "plan",
+      "status": "approved",
+      "by": {
+        "kind": "human",
+        "id": "matias"
+      },
+      "at": "2026-08-14T23:30:00Z"
+    }
+  ],
+  "traceability": {
+    "events": "events.jsonl"
+  }
+}

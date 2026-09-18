@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.1",
+  "kind": "work-item",
+  "id": "feat-001-coupons",
+  "revision": 1,
+  "title": "Aplicar cupones de descuento en checkout",
+  "type": "feature",
+  "status": "active",
+  "created_at": "2026-08-14T23:00:00Z",
+  "created_by": {
+    "kind": "human",
+    "id": "matias"
+  },
+  "workflow": {
+    "id": "feature-standard",
+    "version": "0.1",
+    "entry_phase": "implementation"
+  },
+  "input": {
+    "source": "user_prompt",
+    "summary": "Agregar un campo en la sección de checkout para aplicar códigos de descuento."
+  },
+  "phases": {
+    "prd": {
+      "status": "blocked"
+    },
+    "specification": {
+      "status": "blocked"
+    },
+    "plan": {
+      "status": "blocked"
+    },
+    "implementation": {
+      "status": "in_progress",
+      "artifact": "artifacts/implementation-report.md"
+    },
+    "verification": {
+      "status": "blocked"
+    },
+    "human-code-review": {
+      "status": "blocked"
+    },
+    "archive": {
+      "status": "blocked"
+    }
+  },
+  "traceability": {
+    "events": "events.jsonl"
+  }
+}

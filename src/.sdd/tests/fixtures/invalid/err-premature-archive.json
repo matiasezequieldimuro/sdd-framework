@@ -1,0 +1,84 @@
+{
+  "schema_version": "0.1",
+  "kind": "work-item",
+  "id": "feat-001-coupons",
+  "revision": 7,
+  "title": "Aplicar cupones de descuento en checkout",
+  "type": "feature",
+  "status": "completed",
+  "created_at": "2026-08-14T23:00:00Z",
+  "created_by": {
+    "kind": "human",
+    "id": "matias"
+  },
+  "workflow": {
+    "id": "feature-standard",
+    "version": "0.1",
+    "entry_phase": "prd"
+  },
+  "input": {
+    "source": "user_prompt",
+    "summary": "Agregar un campo en la sección de checkout para aplicar códigos de descuento."
+  },
+  "phases": {
+    "prd": {
+      "status": "approved",
+      "artifact": "artifacts/prd.md"
+    },
+    "specification": {
+      "status": "approved",
+      "artifact": "artifacts/specification.md"
+    },
+    "plan": {
+      "status": "approved",
+      "artifact": "artifacts/plan.md"
+    },
+    "implementation": {
+      "status": "completed",
+      "artifact": "artifacts/implementation-report.md"
+    },
+    "verification": {
+      "status": "completed",
+      "artifact": "artifacts/verification-report.md"
+    },
+    "human-code-review": {
+      "status": "blocked"
+    },
+    "archive": {
+      "status": "completed",
+      "artifact": "artifacts/archive.md"
+    }
+  },
+  "approvals": [
+    {
+      "phase": "prd",
+      "status": "approved",
+      "by": {
+        "kind": "human",
+        "id": "matias"
+      },
+      "at": "2026-08-14T23:10:00Z"
+    },
+    {
+      "phase": "specification",
+      "status": "approved",
+      "by": {
+        "kind": "human",
+        "id": "matias"
+      },
+      "at": "2026-08-14T23:20:00Z"
+    },
+    {
+      "phase": "plan",
+      "status": "approved",
+      "by": {
+        "kind": "human",
+        "id": "matias"
+      },
+      "at": "2026-08-14T23:30:00Z"
+    }
+  ],
+  "traceability": {
+    "events": "events.jsonl"
+  }
+}

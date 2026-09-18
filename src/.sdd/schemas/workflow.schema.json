@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sdd-harness.local/schemas/workflow.schema.json",
+  "title": "SDD Workflow",
+  "type": "object",
+  "required": ["schema_version", "kind", "id", "title", "work_item_type", "entry_points", "phases", "artifacts"],
+  "properties": {
+    "schema_version": { "const": "0.1" },
+    "kind": { "const": "workflow" },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "title": { "type": "string", "minLength": 1 },
+    "work_item_type": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "entry_points": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/entryPoint" } },
+    "phases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/phase" } },
+    "artifacts": { "type": "object", "additionalProperties": { "$ref": "#/$defs/artifact" } }
+  },
+  "$defs": {
+    "entryPoint": {
+      "type": "object",
+      "required": ["phase", "accepts"],
+      "properties": { "phase": { "type": "string" }, "accepts": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } } },
+      "additionalProperties": false
+    },
+    "phase": {
+      "type": "object",
+      "required": ["id", "produces", "approval"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "requires": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "produces": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+        "procedure": { "type": "string" },
+        "approval": { "enum": ["none", "required", "optional"] },
+        "optional": { "type": "boolean", "default": false },
+        "effects": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["path", "template"],
+      "properties": { "path": { "type": "string" }, "template": { "type": "string" } },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

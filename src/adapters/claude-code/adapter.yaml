@@ -1,0 +1,4 @@
+schema_version: "0.1"
+id: claude-code
+title: Claude Code
+description: Adapter de proyecto para operar el motor SDD desde Claude Code.

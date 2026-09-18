@@ -1,0 +1,111 @@
+name: Release
+
+# Crea un GitHub Release con binarios multiplataforma cuando se publica un tag
+# semver (ej. v0.1.0-beta). El versionado es manual: el tag dispara el build.
+#
+#   git tag v0.1.0-beta
+#   git push origin v0.1.0-beta
+on:
+  push:
+    tags:
+      - "v*"
+
+# Necesario para que la Action pueda crear el Release y subir assets.
+permissions:
+  contents: write
+
+env:
+  # La CLI Go vive en este subdirectorio del repo.
+  CLI_DIR: src/cli
+  BINARY_NAME: sdd-cli
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags e historial completo para el commit hash
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: ${{ env.CLI_DIR }}/go.sum
+
+      - name: Sync embedded resources
+        working-directory: ${{ env.CLI_DIR }}
+        run: go generate ./...
+
+      - name: Vet
+        working-directory: ${{ env.CLI_DIR }}
+        run: go vet ./...
+
+      - name: Test
+        working-directory: ${{ env.CLI_DIR }}
+        run: go test ./... -count=1
+
+      - name: Build cross-platform binaries
+        working-directory: ${{ env.CLI_DIR }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          COMMIT="$(git rev-parse --short HEAD)"
+          BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          LDFLAGS="-s -w \
+            -X sdd-cli/cmd.version=${VERSION} \
+            -X sdd-cli/cmd.commit=${COMMIT} \
+            -X sdd-cli/cmd.date=${BUILD_DATE}"
+
+          DIST="${GITHUB_WORKSPACE}/dist"
+          mkdir -p "${DIST}"
+
+          # Targets: GOOS/GOARCH. CGO desactivado -> binarios estaticos,
+          # todos compilables desde el runner Linux.
+          targets="linux/amd64 darwin/amd64 darwin/arm64 windows/amd64"
+
+          for target in ${targets}; do
+            GOOS="${target%/*}"
+            GOARCH="${target#*/}"
+            bin="${BINARY_NAME}"
+            if [ "${GOOS}" = "windows" ]; then
+              bin="${BINARY_NAME}.exe"
+            fi
+
+            echo "Building ${GOOS}/${GOARCH}..."
+            stage="$(mktemp -d)"
+            CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" \
+              go build -trimpath -ldflags "${LDFLAGS}" -o "${stage}/${bin}" .
+
+            archive_base="${BINARY_NAME}_${VERSION}_${GOOS}_${GOARCH}"
+            if [ "${GOOS}" = "windows" ]; then
+              (cd "${stage}" && zip -q "${DIST}/${archive_base}.zip" "${bin}")
+            else
+              tar -C "${stage}" -czf "${DIST}/${archive_base}.tar.gz" "${bin}"
+            fi
+            rm -rf "${stage}"
+          done
+
+          echo "Generating checksums..."
+          (cd "${DIST}" && sha256sum * > SHA256SUMS)
+          ls -lh "${DIST}"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+
+          # Marca prerelease cuando el tag es beta/alpha/rc.
+          prerelease_flag=""
+          case "${VERSION}" in
+            *-alpha*|*-beta*|*-rc*) prerelease_flag="--prerelease" ;;
+          esac
+
+          gh release create "${VERSION}" dist/* \
+            --title "${VERSION}" \
+            --generate-notes \
+            ${prerelease_flag}
