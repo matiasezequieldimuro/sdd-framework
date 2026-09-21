@@ -25,3 +25,6 @@ docs/internal/
 
 # AI Agents — solo el .claude de la raíz del repo; src/adapters/*/.claude debe ser trackeado
 /.claude
+
+# Adapter-generated CLAUDE.md at repo root (src/adapters/*/CLAUDE.md must remain tracked)
+/CLAUDE.md
