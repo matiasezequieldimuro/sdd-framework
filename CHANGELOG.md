@@ -66,5 +66,7 @@ El objetivo de esta BETA es validar el núcleo del motor y su ergonomía con uso
   propaga automáticamente hacia atrás; hoy requiere intervención manual del manifest).
 - Comando de cancelación explícita (`cancelled` está modelado pero sin comando público).
 - Observabilidad de tokens y costos, memoria (Engram) y navegación de código (CodeGraph).
+- Ejecución del motor mediante MCP (Model Context Protocol); se expondrá en ese
+  protocolo en una versión futura.
 
 [0.1.0-beta]: https://github.com/matiasezequieldimuro/sdd-framework/releases/tag/v0.1.0-beta
