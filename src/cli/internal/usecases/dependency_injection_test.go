@@ -228,6 +228,48 @@ func TestStartUseCasePropagatesAdapterFailures(t *testing.T) {
 	}
 }
 
+// TestStartUseCaseExplicitWorkflowToleratesConfigFailure verifies F2: when
+// --workflow is supplied explicitly, a config-load failure must not abort
+// start. The work item is created with the audit in the inactive state
+// (safe default) so no token data is recorded.
+func TestStartUseCaseExplicitWorkflowToleratesConfigFailure(t *testing.T) {
+	workflow := memoryWorkflow()
+	repository := &memoryWorkItemRepository{}
+	artifacts := &memoryArtifactService{}
+	ids := &sequenceIDGenerator{}
+	// Config repository that always returns an error.
+	configWithErr := &staticConfigRepository{err: errors.New("config missing")}
+
+	useCase := usecases.NewStartWorkItemUseCase(
+		repository,
+		staticWorkflowRepository{workflow: workflow},
+		configWithErr,
+		artifacts,
+		fixedClock{value: fixedClock{}.value},
+		ids,
+	)
+
+	item, err := useCase.Execute("unused", usecases.StartWorkItemInput{
+		ID:         "explicit-workflow-item",
+		Title:      "Explicit workflow, missing config",
+		WorkflowID: workflow.ID, // explicit — config error must be tolerated
+		Actor:      domain.Actor{Kind: domain.ActorHuman, ID: "matias"},
+	})
+	if err != nil {
+		t.Fatalf("Execute() error = %v, want nil (config error must be tolerated when --workflow is explicit)", err)
+	}
+	if item == nil {
+		t.Fatal("Execute() item is nil, want non-nil")
+	}
+	// Audit must default to inactive when config cannot be loaded.
+	if item.Observability == nil || item.Observability.TokenUsage == nil {
+		t.Fatal("Observability.TokenUsage is nil, want non-nil")
+	}
+	if item.Observability.TokenUsage.Status != "not_reported" {
+		t.Errorf("TokenUsage.Status = %q, want \"not_reported\" (audit inactive)", item.Observability.TokenUsage.Status)
+	}
+}
+
 func TestStatusUseCasePropagatesAdapterFailures(t *testing.T) {
 	adapterErr := errors.New("adapter failure")
 	workflow := memoryWorkflow()
