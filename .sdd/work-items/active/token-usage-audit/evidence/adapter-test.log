@@ -1,0 +1,22 @@
+
+=== Token usage hook — manual integration tests ===
+
+T1: .active-work-item absent
+  PASS: absent .active-work-item → error log created
+T2: invalid ID in .active-work-item
+  PASS: invalid ID → error log created
+T3: audit inactive (not_reported work item)
+  PASS: inactive audit → error logged (token_audit_inactive)
+T4: empty transcript (all counters = 0)
+  PASS: empty transcript → zero recording, no error
+  PASS: empty transcript → manifest shows recorded
+T5: happy path (active audit, 3-turn transcript)
+  PASS: happy path → no error log
+  PASS: happy path → manifest shows recorded
+  PASS: happy path → total_tokens = 990
+T6: idempotency (same operation-id replayed)
+  PASS: idempotent replay → no duplicate event
+
+Results: 9 passed, 0 failed
+
+adapter test exit: 0

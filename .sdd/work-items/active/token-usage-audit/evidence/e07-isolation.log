@@ -1,0 +1,16 @@
+=== E-07: Worktree Isolation Evidence ===
+feature-a manifest (project dir A):
+        input_tokens: 400
+        output_tokens: 200
+        total_tokens: 600
+
+feature-b manifest (project dir B):
+        input_tokens: 1000
+        output_tokens: 500
+        total_tokens: 1500
+
+feature-a does NOT exist in project B:
+feature-b
+
+feature-b does NOT exist in project A:
+feature-a

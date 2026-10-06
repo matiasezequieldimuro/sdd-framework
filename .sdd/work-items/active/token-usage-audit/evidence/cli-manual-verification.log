@@ -1,0 +1,103 @@
+=== MANUAL CLI VERIFICATION — Worktree binary ===
+Binary: /tmp/sdd-cli (built from src/cli worktree)
+
+--- E-02: Init with active audit ---
+observability:
+    token_usage:
+        status: partial
+        input_tokens: 0
+        output_tokens: 0
+        cache_read_tokens: 0
+        cache_write_tokens: 0
+        total_tokens: 0
+
+--- E-01: Overwrite ---
+{
+  "success": true,
+  "data": "Token usage recorded successfully"
+}
+observability:
+    token_usage:
+        status: recorded
+        source: claude_code
+        input_tokens: 500
+        output_tokens: 300
+        cache_read_tokens: 100
+        cache_write_tokens: 50
+        total_tokens: 950
+
+--- E-04: Recovery (overwrite with larger total) ---
+observability:
+    token_usage:
+        status: recorded
+        source: claude_code
+        input_tokens: 600
+        output_tokens: 350
+        cache_read_tokens: 100
+        cache_write_tokens: 50
+        total_tokens: 1100
+
+--- E-06: Negative → validation_failed, manifest intact ---
+{
+  "success": false,
+  "error": {
+    "code": "validation_failed",
+    "message": "validation failed: token counters must be \u003e= 0"
+  }
+}
+
+--- E-09: All zeros valid ---
+{
+  "success": true,
+  "data": "Token usage recorded successfully"
+}
+
+--- E-10: status text output ---
+Work Item: e-test [active]
+Title: Test
+Workflow: fast-change
+Location: active
+-------------------------------------------------------------
+Token Usage: [recorded]
+  Source:       claude_code
+  Input:        300
+  Output:       150
+  Cache read:   25
+  Cache write:  10
+  Total:        485
+-------------------------------------------------------------
+PHASE                STATUS               ARTIFACT            
+-------------------------------------------------------------
+plan                 in_progress          artifacts/plan.md   
+implementation       blocked              artifacts/implementation-report.md
+verification         blocked              artifacts/verification-report.md
+human-code-review    blocked              artifacts/human-code-review.md
+archive              blocked              artifacts/archive.md
+
+--- E-10: status --json observability ---
+{
+  "token_usage": {
+    "status": "recorded",
+    "source": "claude_code",
+    "input_tokens": 300,
+    "output_tokens": 150,
+    "cache_read_tokens": 25,
+    "cache_write_tokens": 10,
+    "total_tokens": 485
+  }
+}
+
+--- E-12: inactive audit → token_audit_inactive ---
+{
+  "success": false,
+  "error": {
+    "code": "token_audit_inactive",
+    "message": "token audit is not active for this work item"
+  }
+}
+observability:
+    token_usage:
+        status: not_reported
+
+--- RC-9: Idempotency ---
+Events: 7 before, 7 after same op-id (must be equal)

@@ -1,0 +1,80 @@
+schema_version: "0.1"
+kind: work-item
+id: token-usage-audit
+revision: 28
+title: Auditoría y registro de consumo de tokens
+type: feature
+status: active
+created_at: "2026-09-28T21:10:00Z"
+created_by:
+    kind: agent
+    id: sdd-orchestrator
+workflow:
+    id: feature-standard
+    version: "0.1"
+    entry_phase: prd
+input:
+    source: user_prompt
+    summary: 'Registrar el consumo de tokens (input/output/cache/total) por work item a lo largo de todas sus fases, vía hooks del adapter Claude Code, manteniendo el motor CLI limpio (sin lógica acoplada al adapter). Configurable on/off (observability.token_usage). Considera: comando público de API para registrar tokens manualmente; campo de consumo por defecto en work items (0 si on, null si off); acumulación pisando el total de la sesión; logs de error del hook; archivo .active-work-item para saber a qué work item apuntar; limitaciones con worktrees/sesiones. Notas de guía del usuario en docs/internal/11-notas-consumo-tokens.md.'
+phases:
+    archive:
+        status: blocked
+        artifact: artifacts/archive.md
+    human-code-review:
+        status: awaiting_approval
+        artifact: artifacts/human-code-review.md
+    implementation:
+        status: completed
+        artifact: artifacts/implementation-report.md
+    plan:
+        status: completed
+        artifact: artifacts/plan.md
+    prd:
+        status: completed
+        artifact: artifacts/prd.md
+    specification:
+        status: completed
+        artifact: artifacts/specification.md
+    verification:
+        status: completed
+        artifact: artifacts/verification-report.md
+approvals:
+    - phase: prd
+      status: rejected
+      by:
+        kind: human
+        id: matias
+      at: "2026-09-28T21:26:53Z"
+      comment: 'Resolver riesgos abiertos con decisiones del usuario: (1) R-2/primer turno deja de ser riesgo: el registro es ACUMULATIVO — recalcula el total de tokens de la sesión y PISA el valor anterior (no adiciona), así el 2do turno ya incluye el 1ro; reforzar RN-3. (2) R-1/R-3/sesiones: responsabilidad del usuario; se audita TODA la sesión (agente principal + subagentes), lo externo a la sesión no cuenta; se lee .active-work-item para saber a qué work item auditar, ASUMIENDO una sesión y un work item por rama/worktree distinto. Cerrar P-3 y P-4 en consecuencia.'
+    - phase: prd
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-09-28T21:29:30Z"
+      comment: PRD v2 aprobada
+    - phase: specification
+      status: rejected
+      by:
+        kind: human
+        id: matias
+      at: "2026-09-29T12:42:21Z"
+      comment: 'Decisiones del usuario que cierran dependencias: D-1 agregar total_tokens al schema (aditivo); auditoría inactiva => valores null por defecto. D-3 sin migración automática: el usuario edita config manualmente true/false. D-5 status es de la auditoría (observability.token_usage.status): recorded si último registro OK, partial si hubo error (sólo con auditoría activa), not_reported si inactiva. D-7 registrar sobre item con auditoría inactiva => la CLI devuelve un error MANEJABLE que el adapter debe volcar al archivo de logs (porque el user no ve la salida del script).'
+    - phase: specification
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-09-29T13:00:19Z"
+      comment: Spec v2 aprobada; D-4 cerrada (integridad garantizada por recálculo total). Avanzar al plan.
+    - phase: plan
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-09-29T14:02:44Z"
+      comment: Plan aprobado (alcance sólo src/.sdd; ADAPTER_ID único). Avanzar a implementación.
+    - phase: human-code-review
+      status: pending
+traceability:
+    events: events.jsonl

@@ -1,0 +1,39 @@
+=== RUN   TestTokenUsageSetting_TolerantUnmarshal
+=== RUN   TestTokenUsageSetting_TolerantUnmarshal/boolean_true_->_active
+=== RUN   TestTokenUsageSetting_TolerantUnmarshal/boolean_false_->_inactive
+=== RUN   TestTokenUsageSetting_TolerantUnmarshal/string_optional_->_inactive_(legacy_compat)
+=== RUN   TestTokenUsageSetting_TolerantUnmarshal/absent_field_->_inactive
+=== RUN   TestTokenUsageSetting_TolerantUnmarshal/absent_observability_->_inactive
+=== RUN   TestTokenUsageSetting_TolerantUnmarshal/string_'false'_->_inactive
+--- PASS: TestTokenUsageSetting_TolerantUnmarshal (0.00s)
+    --- PASS: TestTokenUsageSetting_TolerantUnmarshal/boolean_true_->_active (0.00s)
+    --- PASS: TestTokenUsageSetting_TolerantUnmarshal/boolean_false_->_inactive (0.00s)
+    --- PASS: TestTokenUsageSetting_TolerantUnmarshal/string_optional_->_inactive_(legacy_compat) (0.00s)
+    --- PASS: TestTokenUsageSetting_TolerantUnmarshal/absent_field_->_inactive (0.00s)
+    --- PASS: TestTokenUsageSetting_TolerantUnmarshal/absent_observability_->_inactive (0.00s)
+    --- PASS: TestTokenUsageSetting_TolerantUnmarshal/string_'false'_->_inactive (0.00s)
+=== RUN   TestAcceptExternalPhaseRequiresConfiguredReview
+--- PASS: TestAcceptExternalPhaseRequiresConfiguredReview (0.00s)
+=== RUN   TestRecordTokenUsage_Success
+--- PASS: TestRecordTokenUsage_Success (0.00s)
+=== RUN   TestRecordTokenUsage_Overwrite
+--- PASS: TestRecordTokenUsage_Overwrite (0.00s)
+=== RUN   TestRecordTokenUsage_AllZero
+--- PASS: TestRecordTokenUsage_AllZero (0.00s)
+=== RUN   TestRecordTokenUsage_InactiveAudit
+--- PASS: TestRecordTokenUsage_InactiveAudit (0.00s)
+=== RUN   TestRecordTokenUsage_NegativeValues
+=== RUN   TestRecordTokenUsage_NegativeValues/negative_input
+=== RUN   TestRecordTokenUsage_NegativeValues/negative_output
+=== RUN   TestRecordTokenUsage_NegativeValues/negative_cache_read
+=== RUN   TestRecordTokenUsage_NegativeValues/negative_cache_write
+--- PASS: TestRecordTokenUsage_NegativeValues (0.00s)
+    --- PASS: TestRecordTokenUsage_NegativeValues/negative_input (0.00s)
+    --- PASS: TestRecordTokenUsage_NegativeValues/negative_output (0.00s)
+    --- PASS: TestRecordTokenUsage_NegativeValues/negative_cache_read (0.00s)
+    --- PASS: TestRecordTokenUsage_NegativeValues/negative_cache_write (0.00s)
+=== RUN   TestRecordTokenUsage_EmptySource
+--- PASS: TestRecordTokenUsage_EmptySource (0.00s)
+PASS
+ok  	sdd-cli/internal/domain	0.005s
+domain tests exit: 0

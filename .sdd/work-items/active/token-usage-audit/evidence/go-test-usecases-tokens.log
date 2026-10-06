@@ -1,0 +1,13 @@
+=== RUN   TestStartValidatesExternalArtifactEntryAndRecordsHash
+--- PASS: TestStartValidatesExternalArtifactEntryAndRecordsHash (0.41s)
+=== RUN   TestRecordEventAppliesEventSchema
+--- PASS: TestRecordEventAppliesEventSchema (0.41s)
+=== RUN   TestRecordTokensUseCase_Success
+--- PASS: TestRecordTokensUseCase_Success (0.42s)
+=== RUN   TestRecordTokensUseCase_Idempotent
+--- PASS: TestRecordTokensUseCase_Idempotent (0.46s)
+=== RUN   TestRecordTokensUseCase_InactiveAudit
+--- PASS: TestRecordTokensUseCase_InactiveAudit (0.41s)
+PASS
+ok  	sdd-cli/internal/usecases	2.122s
+usecase tests exit: 0

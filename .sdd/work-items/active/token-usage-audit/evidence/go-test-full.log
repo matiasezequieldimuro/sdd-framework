@@ -1,0 +1,8 @@
+?   	sdd-cli	[no test files]
+ok  	sdd-cli/cmd	9.922s
+?   	sdd-cli/embeds	[no test files]
+ok  	sdd-cli/internal/domain	0.008s
+ok  	sdd-cli/internal/infra	4.588s
+?   	sdd-cli/internal/ports	[no test files]
+ok  	sdd-cli/internal/usecases	12.441s
+go test exit: 0

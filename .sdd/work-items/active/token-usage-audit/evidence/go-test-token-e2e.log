@@ -1,0 +1,17 @@
+=== RUN   TestCLIRecordTokens_ActiveAudit_SuccessAndOverwrite
+--- PASS: TestCLIRecordTokens_ActiveAudit_SuccessAndOverwrite (0.83s)
+=== RUN   TestCLIRecordTokens_ActiveAudit_CreatedWithZeros
+--- PASS: TestCLIRecordTokens_ActiveAudit_CreatedWithZeros (0.80s)
+=== RUN   TestCLIRecordTokens_InactiveAudit_ReturnsError
+--- PASS: TestCLIRecordTokens_InactiveAudit_ReturnsError (0.95s)
+=== RUN   TestCLIRecordTokens_NegativeInput_ManifestIntact
+--- PASS: TestCLIRecordTokens_NegativeInput_ManifestIntact (1.08s)
+=== RUN   TestCLIRecordTokens_AllZero_Valid
+--- PASS: TestCLIRecordTokens_AllZero_Valid (0.98s)
+=== RUN   TestCLIRecordTokens_Idempotent
+--- PASS: TestCLIRecordTokens_Idempotent (0.86s)
+=== RUN   TestCLIStatus_TextIncludesTokenUsage
+--- PASS: TestCLIStatus_TextIncludesTokenUsage (1.02s)
+PASS
+ok  	sdd-cli/cmd	6.525s
+token e2e exit: 0
