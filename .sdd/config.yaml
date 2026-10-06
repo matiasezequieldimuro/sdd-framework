@@ -1,7 +1,7 @@
 schema_version: "0.1"
 project:
-  id: "replace-with-project-id"
-  name: "Replace with project name"
+  id: "sdd-framework"
+  name: "SDD Framework"
 
 defaults:
   workflow: feature-standard

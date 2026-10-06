@@ -12,4 +12,4 @@ interaction:
   mode: team-lead # team-lead | junior
 
 observability:
-  token_usage: optional
+  token_usage: false
