@@ -79,13 +79,23 @@ func (uc *StartWorkItemUseCase) Execute(baseDir string, in StartWorkItemInput) (
 		return nil, domain.ErrWorkItemAlreadyExists
 	}
 
+	// Load config to read token audit activation (TokenAuditActive / RC-5).
+	// Config loading is non-fatal when the caller supplies an explicit workflow
+	// via --workflow: the audit defaults to inactive (safe mode) and the rest of
+	// the flow continues unchanged. If the workflow is not explicit we still need
+	// the config to resolve defaults.workflow, so surface the error in that case.
+	config, configErr := uc.configRepo.GetConfig(baseDir)
 	workflowID := in.WorkflowID
 	if workflowID == "" {
-		config, err := uc.configRepo.GetConfig(baseDir)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load default workflow: %w", err)
+		if configErr != nil {
+			return nil, fmt.Errorf("failed to load config: %w", configErr)
 		}
 		workflowID = config.Defaults.Workflow
+	}
+	if configErr != nil {
+		// Workflow was given explicitly; use a zero Config so TokenAuditActive()
+		// returns false (audit inactive). No other config field is used here.
+		config = &domain.Config{}
 	}
 	wf, err := uc.workflowRepo.GetWorkflow(baseDir, workflowID)
 	if err != nil {
@@ -126,6 +136,9 @@ func (uc *StartWorkItemUseCase) Execute(baseDir string, in StartWorkItemInput) (
 		CreatedAt:        createdAt,
 		CreatedBy:        in.Actor,
 		ExternalArtifact: externalReference,
+		// TokenAuditActive reflects the config value at work item creation time.
+		// Changes to config.yaml after creation do not affect existing items (RC-5).
+		TokenAuditActive: config.TokenAuditActive(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create work item: %w", err)
