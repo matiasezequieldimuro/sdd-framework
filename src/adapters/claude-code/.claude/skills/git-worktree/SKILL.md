@@ -91,6 +91,29 @@ Una vez aprovisionado el worktree y configurado el entorno:
    ```bash
    sdd-cli start <work-item-id> --dir "$WORKTREE_PATH" --title "<title>" ...
    ```
+2. **Crear `.active-work-item`** en la raíz del worktree para habilitar la
+   auditoría automática de tokens (REQ-7 / RC-6). Este archivo debe existir
+   **antes del primer turno** de Claude Code en ese worktree:
+   ```bash
+   echo "<work-item-id>" > "$WORKTREE_PATH/.active-work-item"
+   ```
+   **Condición de uso (R-1 / RN-5):** una sesión de Claude Code ↔ un work item
+   por rama/worktree. La sesión debe abrirse desde ese worktree (`cd
+   "$WORKTREE_PATH" && claude`). Si se trabaja con varios work items en la
+   misma sesión, los tokens del primero se acumularán en el ID del último `.active-work-item`
+   escrito — esto es responsabilidad del usuario, no la impone el motor.
+   
+   **Limitación v1:** el turno previo a la creación del archivo no se
+   contabiliza (el hook lee `.active-work-item` al final de cada turno; si no
+   existe en el primer turno, el hook registra un error diagnosticable y
+   continúa).
+
+   **Limitación conocida — multi-sesión (F3 / RN-5):** Abrir una sesión
+   **nueva** (no resumida) sobre el mismo work item hace que el siguiente `Stop`
+   acumule sólo los tokens de esa nueva sesión y sobrescriba el total anterior.
+   Para preservar el acumulado completo, usar siempre la **misma sesión** de
+   Claude Code por work item; no iniciar una nueva sesión sobre un work item ya
+   iniciado.
 
 2. Informar al usuario de forma clara:
    - Indicar la ruta absoluta y relativa del nuevo worktree.

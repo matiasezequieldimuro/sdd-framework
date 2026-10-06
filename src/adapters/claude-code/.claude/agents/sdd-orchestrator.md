@@ -160,7 +160,14 @@ You are the **sole agent authorized** to provision and deprovision Git worktrees
   1. Invoke `git-worktree` to create a dedicated branch and isolated worktree at `../<repo-name>-worktrees/<work-item-id>`.
   2. Bootstrap the environment (install dependencies, copy `.env` configurations from root).
   3. Initialize the work item with `sdd-cli start <work-item-id> --dir "$WORKTREE_PATH" ...`, where `$WORKTREE_PATH` is the **absolute** path resolved by the `git-worktree` skill (never `../...`; a relative path resolves against the wrong cwd and `sdd-cli` fails to find `.sdd`).
-  4. Instruct the user to open a new terminal in `../<repo-name>-worktrees/<work-item-id>` and launch `claude` to continue the work item with native context and isolation, allowing parallel orchestrator sessions.
+  4. **Write `.active-work-item`** in the worktree root immediately after `sdd-cli start`, before the user opens Claude Code. This enables the automatic token usage audit (REQ-7 / RC-6):
+     ```bash
+     echo "<work-item-id>" > "$WORKTREE_PATH/.active-work-item"
+     ```
+     **Condition of use:** one Claude Code session = one work item per branch/worktree. If the session is later used for a different work item, update `.active-work-item` accordingly. The engine does not enforce this — it is the user's and orchestrator's responsibility. For fast-changes or fixes without a dedicated worktree, write `.active-work-item` in the current project root at the start of the first turn.
+
+     **Known limitation — multi-session:** Opening a **new** session (not resumed) on the same work item causes the next `Stop` to accumulate only that session's tokens and overwrite the previous total. To preserve the full cumulative count, always reuse the **same Claude Code session** per work item; do not start a new session on an already-started work item.
+  5. Instruct the user to open a new terminal in `../<repo-name>-worktrees/<work-item-id>` and launch `claude` to continue the work item with native context and isolation, allowing parallel orchestrator sessions.
 - **Running inside a worktree:** If the current working directory is already an isolated worktree/feature branch, coordinate the SDD lifecycle directly within the current directory. Never nest worktrees.
 - **Post-archive deprovisioning:** After the `sdd-archivist` confirms that commits are created, pushed to origin, the PR is opened, and `sdd-cli archive` has completed, you own the cleanup: run `git-worktree` to remove the worktree folder (`git worktree remove` and `git worktree prune`).
 
