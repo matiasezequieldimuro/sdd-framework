@@ -30,4 +30,7 @@ var (
 	ErrArchiveConflict          = errors.New("archive storage conflict")
 	ErrAdapterNotFound          = errors.New("adapter not found")
 	ErrAdapterInstallConflict   = errors.New("adapter installation conflict")
+	// ErrTokenAuditInactive is returned when a caller tries to record token usage
+	// on a work item that was initialised with an inactive audit (not_reported).
+	ErrTokenAuditInactive       = errors.New("token audit is not active for this work item")
 )

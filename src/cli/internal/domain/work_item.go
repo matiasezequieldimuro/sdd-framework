@@ -1,6 +1,8 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type PhaseStatus string
 
@@ -73,13 +75,39 @@ type Traceability struct {
 	BaselineSpecs    []string `json:"baseline_specs,omitempty" yaml:"baseline_specs,omitempty"`
 }
 
+// TokenUsageStatus represents the lifecycle state of a work item's token audit.
+type TokenUsageStatus string
+
+const (
+	// TokenUsageNotReported indicates the audit is inactive; counters are null.
+	TokenUsageNotReported TokenUsageStatus = "not_reported"
+	// TokenUsagePartial indicates the audit is active but the last capture was
+	// incomplete or no successful recording has occurred yet.
+	TokenUsagePartial TokenUsageStatus = "partial"
+	// TokenUsageRecorded indicates the audit is active and the last recording
+	// completed successfully; counters reflect the full session total.
+	TokenUsageRecorded TokenUsageStatus = "recorded"
+)
+
+// TokenUsage tracks the cumulative token consumption for a work item session.
+// When the audit is active, all counters are non-nil integers (>=0).
+// When inactive, all counters and source are nil and status is not_reported.
 type TokenUsage struct {
-	Status           string  `json:"status" yaml:"status"` // not_reported, partial, recorded
+	// Status describes the state of the audit (not_reported, partial, recorded).
+	Status           string  `json:"status" yaml:"status"`
+	// Source identifies the agent that performed the last recording.
 	Source           *string `json:"source,omitempty" yaml:"source,omitempty"`
+	// InputTokens is the cumulative input token count for the session.
 	InputTokens      *int    `json:"input_tokens,omitempty" yaml:"input_tokens,omitempty"`
+	// OutputTokens is the cumulative output token count for the session.
 	OutputTokens     *int    `json:"output_tokens,omitempty" yaml:"output_tokens,omitempty"`
+	// CacheReadTokens is the cumulative cache read token count for the session.
 	CacheReadTokens  *int    `json:"cache_read_tokens,omitempty" yaml:"cache_read_tokens,omitempty"`
+	// CacheWriteTokens is the cumulative cache write token count for the session.
 	CacheWriteTokens *int    `json:"cache_write_tokens,omitempty" yaml:"cache_write_tokens,omitempty"`
+	// TotalTokens is the sum of all four counters, computed by the engine on each
+	// successful recording (D-a: invariant enforced in a single place).
+	TotalTokens      *int    `json:"total_tokens,omitempty" yaml:"total_tokens,omitempty"`
 }
 
 type Observability struct {
@@ -120,6 +148,7 @@ type NextPhase struct {
 	State      PhaseState
 }
 
+// NewWorkItemParams carries all inputs required to create a new work item.
 type NewWorkItemParams struct {
 	ID               string
 	Title            string
@@ -128,6 +157,9 @@ type NewWorkItemParams struct {
 	CreatedAt        string
 	CreatedBy        Actor
 	ExternalArtifact *ExternalArtifactReference
+	// TokenAuditActive controls whether the token usage audit is initialized
+	// as active (partial + zero counters) or inactive (not_reported + nil counters).
+	TokenAuditActive bool
 }
 
 func NewWorkItem(workflow *Workflow, params NewWorkItemParams) (*WorkItem, PhaseMutation, error) {
@@ -196,6 +228,7 @@ func NewWorkItem(workflow *Workflow, params NewWorkItemParams) (*WorkItem, Phase
 		Traceability: Traceability{
 			Events: "events.jsonl",
 		},
+		Observability: initObservability(params.TokenAuditActive),
 	}
 
 	var (
@@ -555,4 +588,69 @@ func (status PhaseStatus) satisfiesCompletion() bool {
 
 func invalidPhaseTransition(phaseID string, from, to PhaseStatus) error {
 	return fmt.Errorf("%w: phase %s cannot transition from %s to %s", ErrInvalidTransition, phaseID, from, to)
+}
+
+// initObservability returns the initial Observability block for a new work item.
+// When active is true the token usage audit starts in "partial" state with all
+// counters set to zero, ready to receive the first recording. When inactive
+// all counters are nil and status is "not_reported".
+func initObservability(active bool) *Observability {
+	if active {
+		zero := 0
+		return &Observability{
+			TokenUsage: &TokenUsage{
+				Status:           string(TokenUsagePartial),
+				InputTokens:      &zero,
+				OutputTokens:     &zero,
+				CacheReadTokens:  &zero,
+				CacheWriteTokens: &zero,
+				TotalTokens:      &zero,
+			},
+		}
+	}
+	return &Observability{
+		TokenUsage: &TokenUsage{
+			Status: string(TokenUsageNotReported),
+		},
+	}
+}
+
+// auditActive reports whether the work item's token usage audit is active, i.e.
+// the token_usage block exists and its status is either "partial" or "recorded".
+func (item *WorkItem) auditActive() bool {
+	if item.Observability == nil || item.Observability.TokenUsage == nil {
+		return false
+	}
+	s := item.Observability.TokenUsage.Status
+	return s == string(TokenUsagePartial) || s == string(TokenUsageRecorded)
+}
+
+// RecordTokenUsage overwrites the token usage counters for the work item with
+// the supplied cumulative session totals and marks the audit status as
+// "recorded". The total_tokens invariant (D-a) is computed here, not by the
+// caller, to avoid inconsistency.
+//
+// Returns ErrTokenAuditInactive if the work item was initialised with an
+// inactive audit. Returns ErrValidationFailed for negative counter values or
+// an empty source string.
+func (item *WorkItem) RecordTokenUsage(in, out, cacheRead, cacheWrite int, source string) error {
+	if !item.auditActive() {
+		return ErrTokenAuditInactive
+	}
+	if in < 0 || out < 0 || cacheRead < 0 || cacheWrite < 0 {
+		return fmt.Errorf("%w: token counters must be >= 0", ErrValidationFailed)
+	}
+	if source == "" {
+		return fmt.Errorf("%w: source must not be empty", ErrValidationFailed)
+	}
+
+	total := in + out + cacheRead + cacheWrite
+	item.Observability.TokenUsage.InputTokens = &in
+	item.Observability.TokenUsage.OutputTokens = &out
+	item.Observability.TokenUsage.CacheReadTokens = &cacheRead
+	item.Observability.TokenUsage.CacheWriteTokens = &cacheWrite
+	item.Observability.TokenUsage.TotalTokens = &total
+	item.Observability.TokenUsage.Source = &source
+	item.Observability.TokenUsage.Status = string(TokenUsageRecorded)
+	return nil
 }
