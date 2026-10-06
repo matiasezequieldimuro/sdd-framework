@@ -58,8 +58,15 @@ func TestFSAdapterRepositoryInstallsClaudeCode(t *testing.T) {
 		}
 	}
 	ignore, err := os.ReadFile(filepath.Join(targetDir, ".claude", ".gitignore"))
-	if err != nil || strings.TrimSpace(string(ignore)) != "settings.local.json" {
-		t.Fatalf(".claude/.gitignore = %q, err = %v", ignore, err)
+	if err != nil {
+		t.Fatalf(".claude/.gitignore read error = %v", err)
+	}
+	// The .gitignore must contain both the private settings file and the token
+	// usage log directory (added by the token-usage-audit feature).
+	for _, expected := range []string{"settings.local.json", "hooks/token-usage/logs/"} {
+		if !strings.Contains(string(ignore), expected) {
+			t.Fatalf(".claude/.gitignore = %q, want to contain %q", ignore, expected)
+		}
 	}
 	if _, err := os.Stat(filepath.Join(targetDir, ".claude", "settings.local.json")); !os.IsNotExist(err) {
 		t.Fatalf("private settings file should not be installed: %v", err)
