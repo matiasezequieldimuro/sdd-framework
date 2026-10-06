@@ -5,20 +5,22 @@ import (
 	"sdd-cli/internal/usecases"
 )
 
+// Application aggregates all use cases required by the CLI commands.
 type Application struct {
-	Init        *usecases.InitUseCase
-	Adapters    AdaptersApplication
-	Start       *usecases.StartWorkItemUseCase
-	Status      *usecases.StatusUseCase
-	Next        *usecases.NextUseCase
-	Validate    *usecases.ValidateUseCase
-	Begin       *usecases.BeginPhaseUseCase
-	Deliver     *usecases.DeliverPhaseUseCase
-	Approve     *usecases.ApproveUseCase
-	Reject      *usecases.RejectUseCase
-	Complete    *usecases.CompleteUseCase
-	Archive     *usecases.ArchiveUseCase
-	RecordEvent *usecases.RecordEventUseCase
+	Init         *usecases.InitUseCase
+	Adapters     AdaptersApplication
+	Start        *usecases.StartWorkItemUseCase
+	Status       *usecases.StatusUseCase
+	Next         *usecases.NextUseCase
+	Validate     *usecases.ValidateUseCase
+	Begin        *usecases.BeginPhaseUseCase
+	Deliver      *usecases.DeliverPhaseUseCase
+	Approve      *usecases.ApproveUseCase
+	Reject       *usecases.RejectUseCase
+	Complete     *usecases.CompleteUseCase
+	Archive      *usecases.ArchiveUseCase
+	RecordEvent  *usecases.RecordEventUseCase
+	RecordTokens *usecases.RecordTokensUseCase
 }
 
 func NewProductionApplication() Application {
@@ -94,6 +96,11 @@ func NewProductionApplication() Application {
 			ids,
 		),
 		RecordEvent: usecases.NewRecordEventUseCase(
+			workItems,
+			clock,
+			ids,
+		),
+		RecordTokens: usecases.NewRecordTokensUseCase(
 			workItems,
 			clock,
 			ids,

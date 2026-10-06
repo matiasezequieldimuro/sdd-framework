@@ -57,6 +57,7 @@ func NewRootCommand(application Application) *cobra.Command {
 		newCompleteCommand(application.Complete, options),
 		newArchiveCommand(application.Archive, options),
 		newRecordEventCommand(application.RecordEvent, options),
+		newRecordTokensCommand(application.RecordTokens, options),
 		newVersionCommand(options),
 	)
 	return root
@@ -155,6 +156,8 @@ func errorCode(err error) string {
 		return "work_item_locked"
 	case errors.Is(err, domain.ErrValidationFailed):
 		return "validation_failed"
+	case errors.Is(err, domain.ErrTokenAuditInactive):
+		return "token_audit_inactive"
 	case errors.Is(err, domain.ErrInvalidTransition),
 		errors.Is(err, domain.ErrPhaseNotAwaitingApproval),
 		errors.Is(err, domain.ErrPhaseBlocked),
