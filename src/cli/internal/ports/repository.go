@@ -23,8 +23,9 @@ type WorkItemCommit struct {
 type WorkItemLocation string
 
 const (
-	WorkItemLocationActive  WorkItemLocation = "active"
-	WorkItemLocationArchive WorkItemLocation = "archive"
+	WorkItemLocationActive    WorkItemLocation = "active"
+	WorkItemLocationArchive   WorkItemLocation = "archive"
+	WorkItemLocationCancelled WorkItemLocation = "cancelled"
 )
 
 type LocatedWorkItem struct {
@@ -76,6 +77,30 @@ type WorkItemArchiver interface {
 	FindArchivedWorkItem(baseDir string, id string) (*LocatedWorkItem, error)
 	ArchivedOperationApplied(baseDir string, id string, operationID string) (bool, error)
 	ArchiveWorkItem(baseDir string, commit WorkItemArchiveCommit) (*LocatedWorkItem, error)
+}
+
+// WorkItemCancelCommit bundles the mutated work item and the audit event for
+// the transactional cancel operation.
+type WorkItemCancelCommit struct {
+	Item        *domain.WorkItem
+	Event       domain.Event
+	OperationID string
+}
+
+// CancelledWorkItemChecker provides read-only detection of cancelled work items.
+// Kept separate from WorkItemCanceller to satisfy the ISP: callers that only
+// need to check existence (e.g. start, next, validate) receive a minimal interface.
+type CancelledWorkItemChecker interface {
+	WorkItemCancelledExists(baseDir string, id string) (bool, error)
+}
+
+// WorkItemCanceller provides the full lifecycle contract for the cancel operation,
+// including detection, idempotency, and transactional movement to cancelled/.
+type WorkItemCanceller interface {
+	CancelledWorkItemChecker
+	FindCancelledWorkItem(baseDir string, id string) (*LocatedWorkItem, error)
+	CancelledOperationApplied(baseDir string, id string, operationID string) (bool, error)
+	CancelWorkItem(baseDir string, commit WorkItemCancelCommit) (*LocatedWorkItem, error)
 }
 
 type WorkflowRepository interface {

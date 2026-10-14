@@ -76,12 +76,23 @@ func (initializer *FSProjectInitializer) Initialize(targetDir string) (resultErr
 		}
 	}
 
+	// Engine runtime state (locks and in-flight transactions) must never be committed.
+	if err := writeInitializedFile(
+		filepath.Join(stageDir, "work-items", ".gitignore"),
+		[]byte(workItemsGitignore),
+	); err != nil {
+		return fmt.Errorf("failed to create work-items/.gitignore: %w", err)
+	}
+
 	if err := os.Rename(stageDir, sddDir); err != nil {
 		return fmt.Errorf("failed to publish .sdd directory: %w", err)
 	}
 	stageOwned = false
 	return nil
 }
+
+// workItemsGitignore excludes the engine runtime directories from version control.
+const workItemsGitignore = "# sdd-cli runtime state: locks and in-flight transactions\n.locks/\n.transactions/\n"
 
 func writeInitializedFile(path string, data []byte) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)

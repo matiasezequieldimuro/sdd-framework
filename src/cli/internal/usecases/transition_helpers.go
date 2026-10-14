@@ -124,6 +124,96 @@ func newOperationEvent(
 	return event, nil
 }
 
+// reworkEvents constructs the ordered audit events for a rework operation:
+//  1. work_item.reactivated (only when mutation.Reactivated is true)
+//  2. phase.transitioned with cause rework_requested for the target phase
+//  3. phase.transitioned with cause rework_superseded for each descendant, in
+//     topological order (covering both superseded and re-blocked transitions)
+//
+// All events carry the reason from the caller (INV-06).
+//
+// @param workItemID Work item identifier.
+// @param mutation   Result of domain.WorkItem.ReworkPhase.
+// @param actor      Actor who requested the rework.
+// @param reason     Free-text justification (required, non-empty).
+// @param operationID Idempotency key (may be empty).
+// @returns Ordered slice of events ready to be committed, or an error.
+func reworkEvents(
+	workItemID string,
+	mutation domain.ReworkMutation,
+	actor domain.Actor,
+	reason, operationID string,
+	clock ports.Clock,
+	idGenerator ports.IDGenerator,
+) ([]domain.Event, error) {
+	var events []domain.Event
+
+	if mutation.Reactivated {
+		ev, err := newOperationEvent(
+			workItemID,
+			"work_item.reactivated",
+			actor,
+			map[string]interface{}{
+				"from":   "completed",
+				"to":     "active",
+				"reason": reason,
+			},
+			operationID,
+			clock,
+			idGenerator,
+		)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, ev)
+	}
+
+	target := mutation.Target
+	targetEv, err := newOperationEvent(
+		workItemID,
+		"phase.transitioned",
+		actor,
+		map[string]interface{}{
+			"phase":  target.Phase,
+			"from":   target.From,
+			"to":     target.To,
+			"cause":  "rework_requested",
+			"reason": reason,
+		},
+		operationID,
+		clock,
+		idGenerator,
+	)
+	if err != nil {
+		return nil, err
+	}
+	events = append(events, targetEv)
+
+	for _, t := range mutation.Superseded {
+		ev, err := newOperationEvent(
+			workItemID,
+			"phase.transitioned",
+			actor,
+			map[string]interface{}{
+				"phase":  t.Phase,
+				"from":   t.From,
+				"to":     t.To,
+				"cause":  "rework_superseded",
+				"reason": reason,
+			},
+			operationID,
+			clock,
+			idGenerator,
+		)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, ev)
+	}
+
+	return events, nil
+}
+
 func phaseMutationEvents(
 	workItemID string,
 	mutation domain.PhaseMutation,

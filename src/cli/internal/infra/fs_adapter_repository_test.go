@@ -46,6 +46,8 @@ func TestFSAdapterRepositoryInstallsClaudeCode(t *testing.T) {
 		".claude/agents/sdd-orchestrator.md",
 		".claude/skills/create-plan/SKILL.md",
 		".claude/commands/sdd/feature.md",
+		".claude/commands/sdd/rework.md",
+		".claude/commands/sdd/cancel.md",
 		".claude/hooks/.gitkeep",
 		".claude/rules/.gitkeep",
 	}

@@ -43,7 +43,9 @@ que se sincroniza desde `src/.sdd/` con `go generate` (`tools/syncsdd`).
      `work-items` y `work-items/…` y `tests` y `tests/…` (fixtures de prueba). Cada archivo
      se escribe con `writeInitializedFile` (open `O_CREATE|O_EXCL|O_WRONLY`, write, `fsync`).
   4. Crea explícitamente `work-items/active/` y `work-items/archive/`, cada uno con un
-     archivo `.gitkeep` (para que Git preserve los directorios vacíos).
+     archivo `.gitkeep` (para que Git preserve los directorios vacíos), y escribe
+     `work-items/.gitignore` que excluye el estado de runtime del motor (`.locks/` y
+     `.transactions/`).
   5. **Publica** el staging con un `os.Rename` atómico a `.sdd/`.
   6. Ante cualquier fallo, el staging se limpia (`os.RemoveAll` diferido).
 - **Estructura creada** (según el contrato embebido `src/.sdd/`): `config.yaml`,
@@ -61,7 +63,8 @@ que se sincroniza desde `src/.sdd/` con `go generate` (`tools/syncsdd`).
   final es atómico (no deja `.sdd/` a medias).
 - Proyecto con `.sdd/` preexistente → error "already exists"; no se modifica nada.
 - El contrato materializado **no** contiene `work-items/<id>/` ni `tests/` (fixtures),
-  pero sí `work-items/active/.gitkeep` y `work-items/archive/.gitkeep`.
+  pero sí `work-items/active/.gitkeep`, `work-items/archive/.gitkeep` y
+  `work-items/.gitignore` (ignora `.locks/` y `.transactions/`).
 - `--dir <ruta>` → la estructura se crea bajo `<ruta>/.sdd`.
 
 ## Reglas, contratos y restricciones

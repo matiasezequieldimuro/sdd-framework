@@ -148,6 +148,12 @@ func (item *WorkItem) ViolationsAgainst(workflow *Workflow) []ContractViolation 
 			}
 			continue
 		}
+		// Superseded phases represent work intentionally invalidated by rework.
+		// Their dependencies were reset and are no longer required to be satisfied.
+		// This exemption mirrors the treatment of blocked and not_applicable (DD-5).
+		if state.Status == PhaseSuperseded {
+			continue
+		}
 		if !isEntry && !dependenciesSatisfied {
 			violations = append(violations, NewContractViolation(
 				"work_item.dependencies_unsatisfied",
