@@ -815,6 +815,20 @@ func (inspector *FSValidationInspector) inspectEvents(
 				context.pass(categoryEvent, "event.lifecycle_continuity_valid", lineTarget, "work item completion follows active state")
 			}
 			lifecycleStatus = domain.WorkItemCompleted
+		case "work_item.reactivated":
+			if lifecycleStatus != domain.WorkItemCompleted {
+				context.fail(categoryEvent, "event.lifecycle_continuity_valid", lineTarget, fmt.Sprintf("work item reactivation follows %s", lifecycleStatus))
+			} else {
+				context.pass(categoryEvent, "event.lifecycle_continuity_valid", lineTarget, "work item reactivation follows completed state")
+			}
+			lifecycleStatus = domain.WorkItemActive
+		case "work_item.cancelled":
+			if lifecycleStatus != domain.WorkItemActive {
+				context.fail(categoryEvent, "event.lifecycle_continuity_valid", lineTarget, fmt.Sprintf("work item cancellation follows %s", lifecycleStatus))
+			} else {
+				context.pass(categoryEvent, "event.lifecycle_continuity_valid", lineTarget, "work item cancellation follows active state")
+			}
+			lifecycleStatus = domain.WorkItemCancelled
 		case "archive.completed":
 			archiveEvents++
 			if lifecycleStatus != domain.WorkItemCompleted {

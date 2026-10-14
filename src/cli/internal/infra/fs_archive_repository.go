@@ -44,9 +44,26 @@ func (r *FSWorkItemRepository) FindWorkItem(baseDir, id string) (*ports.LocatedW
 	if archivedErr != nil && !errors.Is(archivedErr, domain.ErrWorkItemNotFound) {
 		return nil, archivedErr
 	}
-	if activeExists && archived != nil {
-		return nil, fmt.Errorf("%w: work item %s exists in active and archive", domain.ErrArchiveConflict, id)
+	cancelledExists, err := r.WorkItemCancelledExists(baseDir, id)
+	if err != nil {
+		return nil, err
 	}
+
+	// Enforce INV-01: a work item must not appear in more than one location.
+	locations := 0
+	if activeExists {
+		locations++
+	}
+	if archived != nil {
+		locations++
+	}
+	if cancelledExists {
+		locations++
+	}
+	if locations > 1 {
+		return nil, fmt.Errorf("%w: work item %s exists in more than one location", domain.ErrArchiveConflict, id)
+	}
+
 	if activeExists {
 		item, err := r.readWorkItemAt(baseDir, activePath, id)
 		if err != nil {
@@ -60,6 +77,12 @@ func (r *FSWorkItemRepository) FindWorkItem(baseDir, id string) (*ports.LocatedW
 	}
 	if archived != nil {
 		return archived, nil
+	}
+	// Cancelled work items are opaque for general reads (INV-05 / DD-7).
+	// Return the sentinel so callers can emit a diagnostic message without
+	// exposing the content of the cancelled expedient.
+	if cancelledExists {
+		return nil, fmt.Errorf("%w: work item '%s' was cancelled", domain.ErrWorkItemCancelled, id)
 	}
 	return nil, domain.ErrWorkItemNotFound
 }

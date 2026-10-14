@@ -65,10 +65,24 @@ func (r *FSWorkItemRepository) WorkItemExists(baseDir, id string) (bool, error) 
 	if err != nil && !errors.Is(err, domain.ErrWorkItemNotFound) {
 		return false, err
 	}
-	if activeExists && archived != nil {
-		return false, fmt.Errorf("%w: work item %s exists in active and archive", domain.ErrArchiveConflict, id)
+	cancelledExists, err := r.WorkItemCancelledExists(baseDir, id)
+	if err != nil {
+		return false, err
 	}
-	return activeExists || archived != nil, nil
+	locations := 0
+	if activeExists {
+		locations++
+	}
+	if archived != nil {
+		locations++
+	}
+	if cancelledExists {
+		locations++
+	}
+	if locations > 1 {
+		return false, fmt.Errorf("%w: work item %s exists in more than one location", domain.ErrArchiveConflict, id)
+	}
+	return locations == 1, nil
 }
 
 func (r *FSWorkItemRepository) GetWorkItem(baseDir, id string) (*domain.WorkItem, error) {
@@ -281,6 +295,9 @@ func (r *FSWorkItemRepository) CommitWorkItem(baseDir string, commit ports.WorkI
 
 func (r *FSWorkItemRepository) recoverIfNeeded(baseDir, id string) error {
 	if err := r.recoverArchiveIfNeeded(baseDir, id); err != nil {
+		return err
+	}
+	if err := r.recoverCancelIfNeeded(baseDir, id); err != nil {
 		return err
 	}
 	workItemPath, err := r.getWorkItemPath(baseDir, id)
