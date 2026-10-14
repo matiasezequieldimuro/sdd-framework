@@ -28,3 +28,14 @@ docs/internal/
 
 # Adapter-generated CLAUDE.md at repo root (src/adapters/*/CLAUDE.md must remain tracked)
 /CLAUDE.md
+# SDD engine runtime state (locks and transaction staging/backups)
+.sdd/work-items/.locks/
+.sdd/work-items/.transactions/
+
+# SDD engine runtime state (locks and in-flight transactions)
+.sdd/work-items/.locks/
+.sdd/work-items/.transactions/
+
+# Raw verification evidence of feat-rework-cancel (kept local by reviewer decision)
+.sdd/work-items/active/feat-rework-cancel/evidence/
+.sdd/work-items/archive/*-feat-rework-cancel/evidence/
