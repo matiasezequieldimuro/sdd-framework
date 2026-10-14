@@ -110,8 +110,10 @@ gate de validación. Juntos cierran el ciclo de vida iniciado por `start`.
 
 No aplica (especificación reconstruida).
 
-- **Pendiente/Desconocido**: `cancelled` está modelado como `WorkItemStatus` pero no hay
-  comando público que lo produzca (fuera de alcance BETA).
+- **Delta (feat-rework-cancel)**: `cancelled` ahora es producido por `sdd-cli cancel` (ver
+  `rework-y-cancelacion.md`). La detección de conflicto de ubicación (`ErrArchiveConflict`) ahora
+  considera también `cancelled/` (un ID en más de una de `active/`, `archive/`, `cancelled/`).
+  `archive` no cambia y solo opera sobre items `completed`.
 
 ## Trazabilidad
 

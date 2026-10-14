@@ -6,6 +6,24 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [Unreleased]
+
+### Agregado
+
+- `sdd-cli rework <id> --phase <fase> --reason <motivo>`: reabre una fase cerrada y marca
+  como `superseded` (o `blocked`) sus fases descendientes; reactiva work items `completed`.
+- `sdd-cli cancel <id> --reason <motivo>`: cancela un work item activo, lo mueve a
+  `.sdd/work-items/cancelled/<id>/` y reserva su ID.
+- Adapter Claude Code: comandos `/sdd:rework` y `/sdd:cancel`, y skill `sdd-cli` actualizado.
+- `sdd-cli init` crea `.sdd/work-items/.gitignore` para excluir `.locks/` y `.transactions/`.
+
+### Corregido
+
+- `validate` acepta el ciclo de vida de work items reactivados por `rework`.
+- `next` reporta fases `superseded` reiniciables y `begin` exige sus dependencias satisfechas.
+
+---
+
 ## [0.1.0-beta] — Primera versión pública (BETA)
 
 Primera versión funcional del framework **SDD (Spec-Driven Development)**. Incluye el

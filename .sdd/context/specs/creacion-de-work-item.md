@@ -11,6 +11,7 @@ sources:
   - src/cli/internal/usecases/start_uc.go
   - src/cli/internal/domain/work_item.go
   - src/cli/internal/infra/artifact_manager.go
+  - src/cli/internal/infra/fs_cancel_repository.go
 ---
 
 # Especificación: Creación de work item (`start`)
@@ -111,6 +112,8 @@ escrito (`--from-artifact`), verificando su integridad con SHA-256.
   `ErrInvalidIdentifier` → `invalid_input`.
 - `ErrWorkItemAlreadyExists` → `already_exists`.
 - Workflow inexistente/ inválido → `not_found` / `invalid_input`.
+- ID reservado por una cancelación previa (existe en `cancelled/`) → `ErrWorkItemAlreadyExists`
+  con mensaje `id is reserved by a prior cancellation` (`already_exists`).
 
 ## Dependencias con otras capacidades
 
@@ -121,6 +124,8 @@ escrito (`--from-artifact`), verificando su integridad con SHA-256.
 
 No aplica (especificación reconstruida).
 
+- **Delta (feat-rework-cancel)**: `start` rechaza IDs reservados por `cancel` (el ID cancelado no
+  puede reutilizarse). Ver `rework-y-cancelacion.md`.
 - **Pendiente/Desconocido**: el CLI no expone un flag para pasar `references` del input
   (`WorkItemInput.References` existe en el dominio pero `start` no lo puebla). El origen
   `imported_artifact` está modelado como valor válido de `input.source` en el dominio/schema,

@@ -18,6 +18,7 @@ sources:
   - src/cli/internal/usecases/transition_helpers.go
   - src/cli/internal/domain/work_item.go
   - src/cli/internal/domain/work_item_validation.go
+  - src/cli/internal/usecases/rework_uc.go
 ---
 
 # Especificación: Transiciones de fase y gates humanos (`begin` / `deliver` / `approve` / `reject`)
@@ -48,8 +49,8 @@ approved|accepted → completed (complete --phase; ver spec de cierre)
 ```
 
 Estados adicionales: `not_applicable` (ancestros en entrada externa), `accepted` (fase de
-entrada externa sin gate), `superseded` (modelado; `begin` lo acepta como reinicio pero no hay
-comando que lo produzca en la BETA).
+entrada externa sin gate), `superseded` (producido por `rework` en las fases descendientes; `begin` lo acepta como
+reinicio; ver `rework-y-cancelacion`).
 
 ### `begin`
 
@@ -57,7 +58,9 @@ comando que lo produzca en la BETA).
   (default `agent`), `--operation-id`.
 - `WorkItem.BeginPhase`: la fase debe estar en `ready`, `rejected` o `superseded`; pasa a
   `in_progress`. Requiere `canMutatePhase` (item `active`, o `completed` si la fase es
-  `optional`). Evento `phase.transitioned` (cause `phase_begun`).
+  `optional`). Una fase `superseded` solo se reinicia si sus dependencias están satisfechas
+  (`approved`, `completed` o `accepted`); si no, `ErrInvalidTransition`. Evento
+  `phase.transitioned` (cause `phase_begun`).
 
 ### `deliver`
 
@@ -140,9 +143,10 @@ comando que lo produzca en la BETA).
 
 No aplica (especificación reconstruida).
 
-- **Pendiente/Desconocido**: `superseded` es aceptado como estado de partida en `begin`, pero
-  no existe comando que lleve una fase a `superseded` (retrabajo semántico / invalidación
-  transitoria fuera de alcance en la BETA).
+- **Delta (feat-rework-cancel)**: `rework` lleva una fase `completed|approved|accepted` a
+  `ready` y sus descendientes a `superseded` (o `blocked` si estaban `ready`), con causes
+  `rework_requested` / `rework_superseded`. Ver `rework-y-cancelacion.md`. `canMutatePhase`
+  no aplica a `rework`, que reactiva el item `completed` a `active`.
 
 ## Trazabilidad
 

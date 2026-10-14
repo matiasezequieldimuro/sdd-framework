@@ -10,6 +10,7 @@ sources:
   - src/cli/cmd/record_event.go
   - src/cli/internal/usecases/record_event_uc.go
   - src/cli/internal/usecases/transition_helpers.go
+  - src/cli/internal/infra/fs_cancel_repository.go
   - src/cli/internal/domain/event.go
   - src/cli/internal/infra/fs_repository.go
   - .sdd/schemas/event.schema.json
@@ -55,11 +56,15 @@ formato `date-time`), `work_item` (kebab-case), `type` (patrón
 - `phase.bypassed_by_external_input` — inicio desde artefacto externo (`{phase, external_artifact, sha256}`).
 - `phase.transitioned` — toda transición de fase (`{phase, from, to, cause}`); el `cause`
   refleja la operación (`work_item_started`, `phase_begun`, `phase_delivered`,
-  `approval_recorded`, `approval_rejected`, `phase_completed`, o `dependencies_satisfied` en
-  desbloqueos).
+  `approval_recorded`, `approval_rejected`, `phase_completed`, `rework_requested` (fase
+  objetivo de `rework`), `rework_superseded` (descendientes de `rework`, incluye `ready → blocked`)
+  o `dependencies_satisfied` en desbloqueos). Los de `rework` incluyen `data.reason`.
 - `approval.requested` — al entrar una fase en `awaiting_approval`.
 - `approval.recorded` — decisión humana (`{phase, status, comment}`).
 - `work_item.completed` — cierre del work item.
+- `work_item.reactivated` — `rework` sobre un item `completed` (`{from: completed, to: active, reason}`).
+- `work_item.cancelled` — `cancel` (`{from: active, to: cancelled, reason}`); queda en el
+  `events.jsonl` del expediente en `cancelled/`.
 - `archive.completed` — archivado (`{from: completed, to: archived, archive_path}`).
 - Eventos **custom** vía `record-event` (cualquier `type` que respete el patrón del schema).
 
@@ -116,6 +121,9 @@ formato `date-time`), `work_item` (kebab-case), `type` (patrón
 
 No aplica (especificación reconstruida).
 
+- **Delta (feat-rework-cancel)**: nuevos eventos `work_item.reactivated`, `work_item.cancelled` y
+  causes `rework_requested` / `rework_superseded`. Los expedientes cancelados conservan su log
+  inmutable en `cancelled/`. Ver `rework-y-cancelacion.md`.
 - **Pendiente/Desconocido**: `record-event` no expone un flag para poblar `data` arbitrario:
   el `RecordEventInput.Data` existe en el use case pero el comando solo inyecta `message`. La
   observabilidad de tokens/costos (`observability.token_usage`) está modelada en el manifest y

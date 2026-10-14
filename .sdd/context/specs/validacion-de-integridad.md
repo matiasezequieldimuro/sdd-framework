@@ -15,6 +15,7 @@ sources:
   - src/cli/internal/domain/validation.go
   - src/cli/internal/infra/schema_validator.go
   - src/cli/internal/infra/fs_validation_inspector.go
+  - src/cli/internal/infra/fs_cancel_repository.go
 ---
 
 # Especificación: Validación de integridad (`validate`)
@@ -138,6 +139,16 @@ Las aprobaciones se validan con `approval.*`: `phase_unknown`, `policy_invalid`,
 
 No aplica (especificación reconstruida).
 
+- **Delta (feat-rework-cancel)**: `WorkItemStatus` incorpora `cancelled` (también en
+  `work-item.schema.json`). `validate <id>` sobre un ID cancelado devuelve `ErrWorkItemCancelled`
+  (`not_found`) antes de inspeccionar. Las fases `superseded` se exceptúan de
+  `work_item.dependencies_unsatisfied` (sus dependencias fueron reiniciadas por `rework`).
+  No se agregaron códigos de check nuevos; el chequeo de proyecto `work_item.location_unique`
+  sigue cubriendo solo `active/` y `archive/`.
+- **Ciclo de vida por eventos**: el inspector reconoce `work_item.reactivated` (exige estado
+  previo `completed`, vuelve a `active`) y `work_item.cancelled` (exige `active`, pasa a
+  `cancelled`), además de `work_item.completed` y `archive.completed`. Un item reactivado por
+  `rework` puede volver a validarse, completarse y archivarse. Ver `rework-y-cancelacion.md`.
 - **Pendiente/Desconocido**: no se enumeraron exhaustivamente los checks a nivel `project`
   (existen más `project.*`); el detalle completo vive en `fs_validation_inspector.go`. Las
   reglas del schema `workflow.schema.json`/`work-item.schema.json` no se transcribieron aquí.

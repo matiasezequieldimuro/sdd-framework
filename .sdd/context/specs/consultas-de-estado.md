@@ -12,6 +12,7 @@ sources:
   - src/cli/internal/usecases/status_uc.go
   - src/cli/internal/usecases/next_uc.go
   - src/cli/internal/domain/work_item.go
+  - src/cli/internal/infra/fs_archive_repository.go
 ---
 
 # Especificación: Consultas de estado (`status` / `next`)
@@ -48,7 +49,9 @@ devuelve la **siguiente acción válida** (fase activa prioritaria y su procedur
 - `GetWorkItem` lee el item **activo** (`WorkItemReader.GetWorkItem`, que resuelve la ruta
   `active/`), carga el workflow y calcula `NextPhase`.
 - **Prioridad de selección** (`WorkItem.NextPhase`), recorriendo fases en orden topológico:
-  `awaiting_approval` > `in_progress` > `ready`. Si no hay ninguna → acción vacía con mensaje
+  `awaiting_approval` > `in_progress` > `ready` > `superseded` con dependencias satisfechas
+  (reinicio tras un `rework`). Las fases `rejected` no se reportan. Si no hay ninguna → acción
+  vacía con mensaje
   `No active phases pending. Work item may be completed or archived.`
 - Devuelve `NextAction`: `{ phase_id, status, procedure, artifact, needs_approval, optional,
   message }`. `needs_approval` es true si la política de la fase es `required` o si está
@@ -76,9 +79,15 @@ devuelve la **siguiente acción válida** (fase activa prioritaria y su procedur
   `not_found`.
 - El orden de fases en `status` (texto) es topológico y estable.
 
+- **Delta (feat-rework-cancel) — work items cancelados**: `status` (vía `FindWorkItem`) y `next`
+  sobre un ID presente en `cancelled/` devuelven `ErrWorkItemCancelled`
+  (`work item '<id>' was cancelled`, código `not_found`) sin exponer su contenido. `status` no
+  tiene `location: cancelled`. Ver `rework-y-cancelacion.md`.
+
 ## Errores y códigos
 
 - `ErrWorkItemNotFound` → `not_found`.
+- `ErrWorkItemCancelled` (ID cancelado) → `not_found`.
 - `ErrInvalidWorkflow` / ciclo en el grafo → `invalid_input` (al ordenar fases).
 
 ## Dependencias con otras capacidades
