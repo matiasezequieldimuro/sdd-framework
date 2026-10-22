@@ -161,6 +161,17 @@ El contrato modela un conjunto de agentes especializados coordinados por un orqu
 En el adapter de Claude Code estos roles se materializan como subagentes en
 `.claude/agents/`.
 
+### 5.4. Verificación de UI (opcional)
+
+Solo para proyectos con UI web. La fase `verification` automatiza la verificación visual y
+los flujos de interacción con la capability `sdd.verify-ui`
+([`.sdd/procedures/verify-ui.md`](../src/.sdd/procedures/verify-ui.md)), que usa Playwright CLI
+por shell y no depende del agente de código.
+
+- Preparación única por proyecto (versión fija, navegador, skill del paquete), confirmada
+  por una persona. Si falta, los checks de UI quedan `Bloqueada`.
+- La evidencia queda en `evidence/ui/` del work item y se cita en `verification-report.md`.
+
 ---
 
 ## 6. Artefactos por fase
