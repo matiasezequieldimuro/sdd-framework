@@ -36,6 +36,6 @@ docs/internal/
 .sdd/work-items/.locks/
 .sdd/work-items/.transactions/
 
-# Raw verification evidence of feat-rework-cancel (kept local by reviewer decision)
-.sdd/work-items/active/feat-rework-cancel/evidence/
-.sdd/work-items/archive/*-feat-rework-cancel/evidence/
+# Raw verification evidence of every work item stays local (may contain heavy files:
+# screenshots, video, traces). Cited from artifacts, never versioned.
+.sdd/work-items/*/*/evidence/

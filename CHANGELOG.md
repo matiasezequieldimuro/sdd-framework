@@ -16,6 +16,11 @@ y el versionado [SemVer](https://semver.org/lang/es/).
   `.sdd/work-items/cancelled/<id>/` y reserva su ID.
 - Adapter Claude Code: comandos `/sdd:rework` y `/sdd:cancel`, y skill `sdd-cli` actualizado.
 - `sdd-cli init` crea `.sdd/work-items/.gitignore` para excluir `.locks/` y `.transactions/`.
+- Capability `sdd.verify-ui` y procedimiento `verify-ui.md`: verificación de UI con
+  Playwright CLI (versión fija, sesiones nombradas y evidencia en el work item), invocada de
+  forma condicional desde `verify`.
+- Adapter Claude Code: skill `verify-ui` (wrapper fino), `sdd-verifier` la carga, y permisos
+  `allow`/`ask`/`deny` para `playwright-cli`.
 
 ### Corregido
 
