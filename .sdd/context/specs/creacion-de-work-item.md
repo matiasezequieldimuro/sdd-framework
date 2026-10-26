@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "creacion-de-work-item"
 capability: "start"
@@ -103,7 +103,7 @@ escrito (`--from-artifact`), verificando su integridad con SHA-256.
 - Entry point no ambiguo (`user_prompt`) o entrada externa que acepte exactamente un artefacto.
 - `not_applicable` solo en ancestros del entry phase.
 - SHA-256 del artefacto externo persistido y verificado luego por `validate`.
-- Manifest inicial: `schema_version 0.1`, `kind work-item`, `status active`, `revision 1`,
+- Manifest inicial: `schema_version 1.0` (y `workflow.version` igual al `schema_version` del workflow), `kind work-item`, `status active`, `revision 1`,
   `traceability.events = events.jsonl`.
 
 ## Errores y códigos

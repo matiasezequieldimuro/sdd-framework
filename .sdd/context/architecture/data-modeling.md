@@ -23,7 +23,7 @@ inmutable).
 
 | Entidad o estructura | Propósito | Fuente de verdad | Observaciones |
 | --- | --- | --- | --- |
-| `WorkItem` (manifest) | Instancia concreta de un workflow: estado de cada fase, aprobaciones, trazabilidad | `.sdd/work-items/<loc>/<id>/manifest.yaml` | `schema_version: "0.1"`, `kind: work-item`; validado por `work-item.schema.json`; `id` kebab-case; `revision` ≥ 1 |
+| `WorkItem` (manifest) | Instancia concreta de un workflow: estado de cada fase, aprobaciones, trazabilidad | `.sdd/work-items/<loc>/<id>/manifest.yaml` | `schema_version: "1.0"`, `kind: work-item`; validado por `work-item.schema.json`; `id` kebab-case; `revision` ≥ 1 |
 | `WorkItemWorkflow` | Referencia embebida al workflow que rige el item | dentro del manifest | `id`, `version`, `entry_phase` |
 | `WorkItemInput` | Origen del trabajo | dentro del manifest | `source`: `user_prompt` \| `external_artifact` \| `imported_artifact`; `summary`; `external_artifact` opcional |
 | `ExternalArtifactReference` | Metadatos del artefacto externo importado | dentro del manifest | `artifact`, `path`, `sha256` (64 hex) |
@@ -32,7 +32,7 @@ inmutable).
 | `Traceability` | Enlaces del item con eventos y otros items | dentro del manifest | `events: events.jsonl`, `related_work_items`, `baseline_specs` |
 | `Observability` / `TokenUsage` | Consumo de tokens (modelado, opcional) | dentro del manifest | `token_usage.status`: `not_reported`/`partial`/`recorded` + contadores |
 | `Workflow` | Plantilla declarativa del proceso (fases, dependencias, gates, artefactos) | `.sdd/workflows/<id>.workflow.yaml` | `kind: workflow`; validado por `workflow.schema.json` + reglas semánticas (DAG) |
-| `WorkflowPhase` | Una fase del workflow | dentro del workflow | `id`, `requires[]`, `produces[]` (exactamente 1 en v0.1), `procedure`, `approval` (`none`/`required`/`optional`), `optional`, `effects[]` |
+| `WorkflowPhase` | Una fase del workflow | dentro del workflow | `id`, `requires[]`, `produces[]` (exactamente 1 en v1.0), `procedure`, `approval` (`none`/`required`/`optional`), `optional`, `effects[]` |
 | `EntryPoint` | Fase desde la que se puede empezar y qué inputs acepta | dentro del workflow | `phase`, `accepts[]` (`user_prompt` o un artefacto producido) |
 | `WorkflowArtifact` | Mapea un artefacto lógico a su ruta y template | dentro del workflow (`artifacts` map) | `path` (`artifacts/*.md`), `template` |
 | `Event` | Registro inmutable de algo que pasó | `.sdd/work-items/<loc>/<id>/events.jsonl` | `kind` implícito; validado por `event.schema.json`; `type` en `snake.dotted-form`; `correlation_id` = operation-id |
@@ -52,7 +52,7 @@ Estados posibles de una fase (`PhaseStatus`): `not_applicable`, `blocked`, `read
 <!-- Relaciones, cardinalidades y reglas relevantes. -->
 
 - `Workflow` **1 — N** `WorkflowPhase`; cada fase produce **exactamente 1** artefacto en
-  el contrato v0.1 (`workflow.produced_artifact` / regla `phase_artifact_count_invalid`).
+  el contrato v1.0 (`workflow.produced_artifact` / regla `phase_artifact_count_invalid`).
 - `Workflow` **1 — N** `WorkflowArtifact`; cada artefacto tiene ruta única y es producido
   por exactamente una fase (`artifact_producer_missing`/`_duplicate`).
 - Dependencias entre fases (`requires`) forman un **DAG** (grafo dirigido acíclico); se
@@ -85,10 +85,17 @@ Estados posibles de una fase (`PhaseStatus`): `not_applicable`, `blocked`, `read
     `artifact.schema.json`.
   - Workflows — YAML validado contra `workflow.schema.json` + reglas semánticas del
     dominio.
-- Migraciones o versionado: versionado por **`schema_version: "0.1"`** en work items,
-  workflows, eventos, artefactos y config; `WorkItem.Workflow.Version` debe coincidir con
-  el `schema_version` del workflow (`workflow_version_mismatch`). No se observó un motor
-  de migraciones automáticas: el versionado es declarativo y el chequeo es de consistencia.
+- Migraciones o versionado: versionado por **`schema_version: "1.0"`** en work items,
+  workflows, eventos, artefactos, config, registry y markers de transacciones;
+  `WorkItem.Workflow.Version` debe coincidir con el `schema_version` del workflow
+  (`workflow_version_mismatch`). La fuente única en Go es `domain.ContractSchemaVersion`
+  (`internal/domain/contract_version.go`). Corte duro: el motor escribe y exige `"1.0"` y
+  rechaza `"0.1"` con un error explícito mediante `domain.ValidateContractSchemaVersion`.
+  Los guards no dependen de los schemas del proyecto: lectura de manifest y workflow
+  (`requireContractSchemaVersion`), metadata de artefactos (`validateArtifactMetadata`),
+  markers de archive/cancel y las checks de `validate` `*.schema_version_supported`.
+  Única excepción temporal: `event.schema.json` acepta `enum ["0.1","1.0"]` para que los
+  `events.jsonl` históricos sigan inmutables; los eventos nuevos se escriben en `"1.0"`.
   `Revision` (entero monótono ≥ 1) sirve al control de concurrencia optimista, no al
   versionado de schema.
 - Retención y eliminación: los work items no se borran; se **archivan** moviéndolos a
@@ -140,8 +147,9 @@ el motor en sí no almacena secretos.
     flujo/comando que los produzca en la BETA (Pendiente, confirmado en `CHANGELOG.md`).
   - `observability.token_usage` está modelado en dominio y schema pero no se recolecta
     realmente (Pendiente).
-  - No hay motor de migración de `schema_version`; se asume que un cambio de contrato
-    implicaría un salto de versión manejado manualmente (supuesto).
+  - No hay motor de migración de `schema_version`; el paso 0.1→1.0 es manual (ver
+    `docs/GUIA_INSTALACION.md` §5.1). Pendiente: comando/script de migración (permitiría
+    retirar la excepción `"0.1"` de `event.schema.json`).
 - Fuentes verificadas:
   - `src/cli/internal/domain/{work_item.go, workflow.go, event.go, config.go,
     validation.go, workflow_validation.go, work_item_validation.go, diagnostic.go,

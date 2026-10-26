@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "consultas-de-estado"
 capability: "status / next"

@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "validacion-de-integridad"
 capability: "validate"
@@ -67,7 +67,7 @@ artefactos y de templates renderizados) reportando cada violación como `*.schem
 `workflow.identifier_invalid`, `workflow.phases_missing`, `workflow.entry_points_missing`,
 `workflow.phase_identifier_invalid`, `workflow.phase_duplicate`,
 `workflow.approval_policy_invalid`, `workflow.phase_artifact_count_invalid` (exactamente 1
-artefacto por fase en v0.1), `workflow.artifact_identifier_invalid`,
+artefacto por fase en v1.0), `workflow.artifact_identifier_invalid`,
 `workflow.template_identifier_invalid`, `workflow.artifact_path_invalid`,
 `workflow.artifact_path_duplicate`, `workflow.phase_self_dependency`,
 `workflow.phase_dependency_unknown`, `workflow.produced_artifact_unknown`,
@@ -75,7 +75,7 @@ artefacto por fase en v0.1), `workflow.artifact_identifier_invalid`,
 `workflow.entry_phase_unknown`, `workflow.entry_phase_duplicate`,
 `workflow.entry_input_ambiguous`, `workflow.entry_input_unknown`, `workflow.graph_cycle`
 (orden topológico sin ciclos) y `workflow.phase_unreachable` (alcanzabilidad desde algún
-entry point). Además se verifica `workflow.filename_matches_id` y la presencia/renderizado de
+entry point). Además se verifica `workflow.filename_matches_id`, `workflow.schema_version_supported` (el workflow declara `schema_version` 1.0) y la presencia/renderizado de
 templates y procedures (`template.file_exists`, `template.placeholders_resolved`,
 `template.front_matter_valid`, `template.identity_valid`, `procedure.file_exists`).
 
@@ -107,6 +107,11 @@ Las aprobaciones se validan con `approval.*`: `phase_unknown`, `policy_invalid`,
   (`reference.external_hash_matches`), disponibilidad (`reference.external_available` —
   **warning** si el archivo no está en esta máquina), `reference.external_regular`,
   `reference.related_work_item_id_valid`, `reference.baseline_spec_exists` (specs bajo `specs/`).
+- Manifest: además de `manifest.yaml_valid` y `manifest.schema_valid`, la check
+  `manifest.schema_version_supported` exige `schema_version` 1.0 y se reporta aunque los schemas del
+  proyecto estén desactualizados; no corta el resto de las checks del work item. Escenario verificable:
+  un manifest con `schema_version` 0.1 deja `manifest.schema_version_supported` en `failed` y `status`
+  falla con `invalid_input`.
 - Nivel proyecto: existencia de directorios/archivos requeridos, `config.yaml`
   (`config.yaml_valid`, `config.schema_version_supported`, `config.default_workflow_valid`,
   `config.default_workflow_exists`), registry de capabilities (`registry.*`), y unicidad de

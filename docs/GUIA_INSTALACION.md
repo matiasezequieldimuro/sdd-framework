@@ -219,6 +219,9 @@ Get-Command sdd-cli -All   # Windows
 
 Actualizar es simplemente **reemplazar el binario** por uno más nuevo.
 
+> **Excepción:** pasar de un binario 0.x a 1.x requiere migrar el contrato del proyecto
+> (ver §5.1).
+
 - **Si instalaste con el método rápido (3.1):** volvé a ejecutar el mismo comando;
   sobrescribe el binario con el último release.
 
@@ -239,6 +242,46 @@ Actualizar es simplemente **reemplazar el binario** por uno más nuevo.
 > `type -a sdd-cli` que no haya quedado **otra copia vieja antes en el PATH**. Si la
 > hay, borrala (ver sección 6). Es la causa más común de "ejecuté la versión nueva
 > pero sigue comportándose como la vieja".
+
+### 5.1 Migrar un proyecto existente al contrato 1.0
+
+`sdd-cli` 1.x solo acepta el contrato `schema_version: "1.0"`. No hay comando de migración
+todavía, así que la migración es manual.
+
+1. **Antes de actualizar el binario** (con el binario 0.x):
+   - Verificar que `.sdd/work-items/.transactions/` no tenga transacciones en curso:
+     - Un marker `<id>.archive.json` o `<id>.cancel.json` indica un archivado o una
+       cancelación interrumpida. Ejecutar `sdd-cli status <id>` con el binario 0.x: la
+       transacción se completa o se revierte y el marker desaparece.
+     - Un `<id>.backup` cuyo work item **no** está en `active/` indica un guardado
+       interrumpido. `sdd-cli status <id>` con el binario 0.x restaura el work item.
+     - Un `<id>.backup` cuyo work item **sí** está en `active/` es un resto de un guardado
+       ya publicado. Es inofensivo: el motor lo elimina en la próxima escritura del item.
+   - Verificar que `sdd-cli validate` pase.
+   - Hacer commit o backup de `.sdd/`.
+2. Instalar el binario 1.x.
+3. Obtener el contrato nuevo: `sdd-cli init --dir <tmp-vacío>`.
+4. Reemplazar `.sdd/schemas/*.json` por los de `<tmp>/.sdd/schemas/`. El motor lee los
+   schemas del proyecto.
+5. Cambiar `schema_version: "0.1"` → `"1.0"` en:
+   - `.sdd/config.yaml`
+   - `.sdd/registry/capabilities.yaml`
+   - `.sdd/workflows/*.workflow.yaml`
+   - `.sdd/templates/*.md` (front-matter)
+
+   Si no los personalizaste, podés reemplazarlos por los de `<tmp>`. Si los personalizaste,
+   editá solo esa línea.
+6. En **todos** los work items (`.sdd/work-items/active/`, `archive/`, `cancelled/`):
+   - `manifest.yaml`: `schema_version: "1.0"` y `workflow.version: "1.0"`.
+   - `artifacts/*.md`: front-matter `schema_version: "1.0"`.
+   - **No editar `events.jsonl`**: las líneas históricas `"0.1"` siguen siendo válidas.
+7. Opcional: el front-matter de documentos propios (por ejemplo `.sdd/context/specs/*.md`). El
+   motor no lo valida. No editar archivos usados como `--from-artifact`, porque su hash
+   SHA-256 está registrado en el manifest y `validate` fallaría.
+8. Los archivos del adapter (`.claude/`, `CLAUDE.md`, `.mcp.json`) no llevan la versión y no
+   requieren cambios.
+9. Ejecutar `sdd-cli validate`. Las checks `*.schema_version_supported`, `*.schema_valid` y
+   `artifact.identity_valid` señalan cada archivo pendiente.
 
 ---
 
