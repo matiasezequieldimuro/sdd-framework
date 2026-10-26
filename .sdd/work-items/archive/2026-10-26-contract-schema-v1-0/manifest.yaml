@@ -1,4 +1,4 @@
-schema_version: "0.1"
+schema_version: "1.0"
 kind: work-item
 id: contract-schema-v1-0
 revision: 15
@@ -11,7 +11,7 @@ created_by:
     id: sdd-orchestrator
 workflow:
     id: fast-change
-    version: "0.1"
+    version: "1.0"
     entry_phase: plan
 input:
     source: user_prompt

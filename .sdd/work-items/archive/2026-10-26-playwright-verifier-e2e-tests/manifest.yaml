@@ -1,4 +1,4 @@
-schema_version: "0.1"
+schema_version: "1.0"
 kind: work-item
 id: playwright-verifier-e2e-tests
 revision: 42
@@ -11,7 +11,7 @@ created_by:
     id: sdd-orchestrator
 workflow:
     id: fast-change
-    version: "0.1"
+    version: "1.0"
     entry_phase: plan
 input:
     source: user_prompt

@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: artifact
 id: "code-review-record"
 work_item: "contract-schema-v1-0"

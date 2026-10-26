@@ -1,4 +1,4 @@
-schema_version: "0.1"
+schema_version: "1.0"
 kind: work-item
 id: feat-rework-cancel
 revision: 45
@@ -11,7 +11,7 @@ created_by:
     id: matias
 workflow:
     id: feature-standard
-    version: "0.1"
+    version: "1.0"
     entry_phase: prd
 input:
     source: user_prompt

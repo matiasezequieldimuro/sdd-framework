@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: artifact
 id: "verification-report"
 work_item: "contract-schema-v1-0"
