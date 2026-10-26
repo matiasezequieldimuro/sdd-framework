@@ -5,7 +5,7 @@ description: Usar para aprovisionar, configurar entorno y desaprovisionar worktr
 
 # Git Worktree
 
-Utilizar esta skill para gestionar el ciclo de vida de **worktrees aislados** para features, change requests y bugs. Permite el trabajo paralelo de múltiples orquestadores en terminales independientes sin colisionar en ramas estables (`develop`, `main`).
+Utilizar esta skill para gestionar el ciclo de vida de **worktrees aislados** para features, change requests y bugs. Permite el trabajo paralelo de múltiples orquestadores en terminales independientes sin colisionar en las ramas estables (`Development Branch` y `Main Branch` definidas en `CLAUDE.md`).
 
 > **Regla de Autoridad:** Solo el `sdd-orchestrator` tiene autorización para crear o remover worktrees. Los subagentes especialistas (`sdd-developer`, `sdd-verifier`, etc.) nunca administran worktrees.
 
