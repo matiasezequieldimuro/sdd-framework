@@ -191,8 +191,8 @@ func (inspector *FSValidationInspector) inspectCapabilities(context *validationC
 		return
 	}
 	context.pass(categoryRegistry, "registry.yaml_valid", target, "capability registry is valid YAML")
-	if registry.SchemaVersion != "0.1" {
-		context.fail(categoryRegistry, "registry.schema_version_supported", target, fmt.Sprintf("unsupported schema version %q", registry.SchemaVersion))
+	if err := domain.ValidateContractSchemaVersion("capability registry", registry.SchemaVersion); err != nil {
+		context.fail(categoryRegistry, "registry.schema_version_supported", target, err.Error())
 	} else {
 		context.pass(categoryRegistry, "registry.schema_version_supported", target, "capability registry schema version is supported")
 	}
@@ -388,10 +388,11 @@ func (inspector *FSValidationInspector) inspectConfig(context *validationContext
 		return ""
 	}
 	context.pass(categoryConfig, "config.yaml_valid", target, "configuration is valid YAML")
-	if config.SchemaVersion != "0.1" {
-		context.fail(categoryConfig, "config.schema_version_supported", target, fmt.Sprintf("unsupported schema version %q", config.SchemaVersion))
+	if err := domain.ValidateContractSchemaVersion("config.yaml", config.SchemaVersion); err != nil {
+		context.fail(categoryConfig, "config.schema_version_supported", target, err.Error())
 	} else {
-		context.pass(categoryConfig, "config.schema_version_supported", target, "schema version 0.1 is supported")
+		context.pass(categoryConfig, "config.schema_version_supported", target,
+			fmt.Sprintf("schema version %s is supported", domain.ContractSchemaVersion))
 	}
 	if err := domain.ValidateIdentifier("default workflow", config.Defaults.Workflow); err != nil {
 		context.fail(categoryConfig, "config.default_workflow_valid", target, err.Error())
@@ -444,6 +445,12 @@ func (inspector *FSValidationInspector) inspectWorkflowFile(context *validationC
 		return nil
 	}
 	context.pass(categoryWorkflow, "workflow.yaml_valid", target, "workflow is valid YAML")
+	if err := domain.ValidateContractSchemaVersion("workflow", workflow.SchemaVersion); err != nil {
+		context.fail(categoryWorkflow, "workflow.schema_version_supported", target, err.Error())
+	} else {
+		context.pass(categoryWorkflow, "workflow.schema_version_supported", target,
+			fmt.Sprintf("schema version %s is supported", domain.ContractSchemaVersion))
+	}
 
 	if context.schemaAvailable["workflow.schema.json"] {
 		violations, err := inspector.schemas.ValidateYAMLAll(context.baseDir, "workflow.schema.json", data)
@@ -586,6 +593,12 @@ func (inspector *FSValidationInspector) inspectWorkItem(
 		return
 	}
 	context.pass(categoryManifest, "manifest.yaml_valid", manifestTarget, "manifest is valid YAML")
+	if err := domain.ValidateContractSchemaVersion("manifest", item.SchemaVersion); err != nil {
+		context.fail(categoryManifest, "manifest.schema_version_supported", manifestTarget, err.Error())
+	} else {
+		context.pass(categoryManifest, "manifest.schema_version_supported", manifestTarget,
+			fmt.Sprintf("schema version %s is supported", domain.ContractSchemaVersion))
+	}
 	if context.schemaAvailable["work-item.schema.json"] {
 		violations, validateErr := inspector.schemas.ValidateYAMLAll(context.baseDir, "work-item.schema.json", data)
 		if validateErr != nil {

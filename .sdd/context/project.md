@@ -17,11 +17,11 @@ Separa dos responsabilidades que normalmente se mezclan:
   humanos, prepara artefactos y registra evidencia.
 
 Está pensado para ser "agent-agnostic": el mismo contrato puede operarse desde distintas
-herramientas de codificación mediante *adapters* (en la BETA, Claude Code). El público
+herramientas de codificación mediante *adapters* (en la v1.0.0, Claude Code). El público
 objetivo es el propio autor y desarrolladores que quieran delegar tareas a la IA con un
 proceso auditable y portable.
 
-> Estado: **BETA** (`v0.1.0-beta`).
+> Estado: **Estable** (`v1.0.0`).
 
 ## Alcance y límites
 
@@ -31,8 +31,10 @@ proceso auditable y portable.
   - El **motor determinista `sdd-cli`** en Go (binario nativo único, contrato embebido,
     sin runtime externo), con arquitectura hexagonal/clean.
   - El **adapter de Claude Code** (`src/adapters/claude-code/`): `CLAUDE.md`, `.mcp.json`
-    y `.claude/` con agents, hooks y settings; las skills/commands se materializan sobre
-    procedures portables.
+    y `.claude/` con 7 agents, skills (wrappers finos de las capabilities/procedures
+    portables, más skills operativas como `sdd-cli`, `git-*`, `pull-request` y
+    `certificate-weekly-hs`), commands (`/sdd:*` y `/certificate-weekly-hs`), hooks y
+    settings (incluye permisos para `playwright-cli`, usado por `verify-ui`).
   - Documentación (`docs/`), scripts de instalación multiplataforma (`scripts/`) y CI/CD
     (`.github/workflows/`).
   - Cinco workflows: `feature-standard`, `change-request`, `fast-change`,
@@ -40,14 +42,19 @@ proceso auditable y portable.
 - No incluye:
   - El trabajo cognitivo: la CLI **no** redacta PRDs, no programa la feature ni decide
     qué modelo usar. Eso lo hacen los agentes/personas.
-  - Este repositorio es el MOTOR/template, **no** un proyecto consumidor: no se crean
-    work items reales aquí; se ajusta el motor.
-- Límites conocidos (fuera de alcance en la BETA, según `CHANGELOG.md`):
-  - Retrabajo semántico e invalidación transitoria (`superseded` no se propaga
-    automáticamente hacia atrás; hoy requiere edición manual del manifest).
-  - Comando de cancelación explícita (`cancelled` está modelado pero sin comando público).
+- Uso del propio framework (dogfooding): los cambios al motor se hacen en `src/`, pero se
+  gobiernan como work items SDD de este mismo repo. La `.sdd/` de la raíz es una copia
+  instalada de `src/.sdd/` más el conocimiento propio del repo (`context/`, `specs/` y
+  `research/`) y sus `work-items/` (hay expedientes archivados en
+  `.sdd/work-items/archive/`). Ver `AGENTS.md`.
+- Límites conocidos (fuera de alcance en la v1.0.0):
   - Observabilidad de tokens y costos, memoria (Engram) y navegación de código (CodeGraph).
   - Ejecución del motor mediante MCP (Model Context Protocol); se expondrá a futuro.
+  - Comando de migración de `schema_version` (el paso 0.1→1.0 es manual, ver
+    `docs/GUIA_INSTALACION.md` §5.1).
+  - El retrabajo (`sdd-cli rework`) y la cancelación (`sdd-cli cancel`), listados como
+    fuera de alcance en `0.1.0-beta`, ya están implementados (ver `CHANGELOG.md`
+    `[Unreleased]` y `.sdd/specs/rework-y-cancelacion.md`).
 
 ## Componentes principales
 
@@ -104,19 +111,23 @@ proceso auditable y portable.
 - `docs/SDD_WORKFLOW.md` — escenarios, fases, gates, artefactos y fuentes de verdad.
 - `docs/CLI.md` — referencia de comandos, flags, ejemplos y contrato de salida.
 - `docs/GUIA_INSTALACION.md` — instalación, actualización y desinstalación por OS.
-- `CHANGELOG.md` — scope funcional de la BETA y lo que queda fuera de alcance.
+- `CHANGELOG.md` — historial de versiones, alcance de cada release y lo que queda fuera de alcance.
 - `AGENTS.md` — rol/objetivo del asistente en el diseño del framework.
 - Contexto de arquitectura: `.sdd/context/architecture/` (este mismo conjunto de docs).
+- Specs reconstruidas/consolidadas de las capacidades del motor: `.sdd/specs/`.
 
 ## Estado y pendientes
 
-- Estado actual: **BETA `v0.1.0-beta`** (primera versión pública). El núcleo del motor,
-  el contrato y el adapter de Claude Code están implementados y cubiertos por tests + CI.
-  El objetivo de la BETA es validar el núcleo del motor y su ergonomía con uso real.
-- Pendientes o preguntas abiertas (verificados en `CHANGELOG.md`):
-  - Propagación automática de `superseded` (retrabajo semántico) — hoy manual.
-  - Comando público de cancelación (`cancelled` modelado, sin comando).
+- Estado actual: **Estable `v1.0.0`** (primera versión mayor; sucede a `v0.1.0-beta`). El
+  núcleo del motor, el contrato (`schema_version` 1.0) y el adapter de Claude Code están
+  implementados y cubiertos por tests + CI.
+- Pendientes o preguntas abiertas:
   - Observabilidad de tokens/costos (`observability.token_usage` está modelado en el
     manifest y el schema, pero marcado como `optional`/futuro), memoria (Engram) y
     navegación de código (CodeGraph).
   - Exposición del motor vía MCP.
+  - Comando/script de migración de `schema_version`; cuando exista se podrá retirar la
+    excepción `"0.1"` de `event.schema.json`.
+- Resuelto respecto de `0.1.0-beta`: `rework` (fase a `ready` + descendientes a
+  `superseded`/`blocked`) y `cancel` (mueve a `.sdd/work-items/cancelled/<id>/` y reserva
+  el ID) existen como comandos públicos (`src/cli/cmd/{rework,cancel}.go`).

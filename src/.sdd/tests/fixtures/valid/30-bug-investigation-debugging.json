@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "1.0",
   "kind": "work-item",
   "id": "bug-002-crash-on-refresh",
   "revision": 2,
@@ -13,7 +13,7 @@
   },
   "workflow": {
     "id": "bug-investigation",
-    "version": "0.1",
+    "version": "1.0",
     "entry_phase": "issue"
   },
   "input": {

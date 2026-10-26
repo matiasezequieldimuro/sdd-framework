@@ -13,6 +13,7 @@
       "Edit(/.sdd/research/**)",
       "Edit(/.sdd/specs/**)",
       "Edit(/.sdd/work-items/active/**/artifacts/**)",
+      "Edit(/.sdd/work-items/active/**/evidence/**)",
       "Bash(npx --no-install playwright-cli *)",
       "Bash(playwright-cli *)"
     ],
@@ -88,6 +89,7 @@
       "Edit(/.sdd/tests/**)",
       "Edit(/.sdd/workflows/**)",
       "Edit(/.sdd/work-items/archive/**)",
+      "Edit(/.sdd/work-items/cancelled/**)",
       "Edit(/.sdd/work-items/active/**/manifest.yaml)",
       "Edit(/.sdd/work-items/active/**/events.jsonl)",
       "Bash(npx playwright-cli *)",

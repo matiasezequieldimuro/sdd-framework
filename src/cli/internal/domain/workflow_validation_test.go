@@ -39,7 +39,7 @@ func TestWorkflowValidationRejectsInvalidGraphs(t *testing.T) {
 		{
 			name: "traversing artifact path",
 			workflow: &domain.Workflow{
-				SchemaVersion: "0.1",
+				SchemaVersion: domain.ContractSchemaVersion,
 				Kind:          "workflow",
 				ID:            "test-workflow",
 				Title:         "Test",
@@ -113,7 +113,7 @@ func testWorkflow(phases []domain.WorkflowPhase, entries []domain.EntryPoint) *d
 		}
 	}
 	return &domain.Workflow{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		Kind:          "workflow",
 		ID:            "test-workflow",
 		Title:         "Test",

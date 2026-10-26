@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "inicializacion-y-contrato-embebido"
 capability: "init"
@@ -48,10 +48,13 @@ que se sincroniza desde `src/.sdd/` con `go generate` (`tools/syncsdd`).
      `.transactions/`).
   5. **Publica** el staging con un `os.Rename` atómico a `.sdd/`.
   6. Ante cualquier fallo, el staging se limpia (`os.RemoveAll` diferido).
-- **Estructura creada** (según el contrato embebido `src/.sdd/`): `config.yaml`,
-  `schemas/`, `workflows/`, `templates/`, `procedures/`, `registry/capabilities.yaml`,
-  `context/` y `work-items/{active,archive}/.gitkeep`. Quedan fuera `work-items/` con
-  contenido y `tests/`.
+- **Estructura creada** (según el contrato embebido `src/.sdd/`): `README.md`,
+  `config.yaml`, `schemas/`, `workflows/`, `templates/`, `procedures/`,
+  `registry/capabilities.yaml`, `context/` (plantillas de `project.md`,
+  `domain-language.md` y `architecture/`), `research/.gitkeep`, `specs/.gitkeep`,
+  `work-items/{active,archive}/.gitkeep` y `work-items/.gitignore`. Quedan fuera
+  `work-items/` con contenido y `tests/`. `cancelled/` no se crea en `init`: lo crea
+  `cancel` de forma lazy.
 - **Salida**:
   - Texto: `Successfully initialized .sdd directory framework in '<dir>'`.
   - JSON (`--json`): envelope `{ "success": true, "data": "Successfully initialized .sdd directory framework" }`.

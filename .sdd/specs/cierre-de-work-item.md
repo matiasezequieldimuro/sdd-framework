@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "cierre-de-work-item"
 capability: "complete / archive"
@@ -89,8 +89,8 @@ gate de validación. Juntos cierran el ciclo de vida iniciado por `start`.
   (`ErrArchiveConflict`).
 - El directorio de archivo respeta el patrón `YYYY-MM-DD-<id>` (validado al leer/parsear).
 - Escritura atómica con backup/recovery; concurrencia por lock (`flock`) + revisión.
-- Política de archivo: `config.yaml` `archive_policy` (p. ej. `optional`); en `feature-standard`
-  la fase `archive` es `optional`.
+- Política de archivo: `config.yaml` `archive_policy` (p. ej. `optional`); en los cinco
+  workflows provistos la fase `archive` es `optional: true` (`approval: none`).
 
 ## Errores y códigos (envelope JSON)
 

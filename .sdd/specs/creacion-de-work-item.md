@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "creacion-de-work-item"
 capability: "start"
@@ -95,7 +95,8 @@ escrito (`--from-artifact`), verificando su integridad con SHA-256.
   `prd` queda `not_applicable`, `specification` queda `awaiting_approval` (gate required),
   se registra `phase.bypassed_by_external_input` con el SHA-256.
 - `start` con id existente + mismo `--operation-id` → devuelve el item, sin duplicar.
-- `--from-artifact` sin `--phase` (o viceversa) → error `invalid_external_artifact`.
+- `--from-artifact` sin `--phase` (o viceversa) → `ErrInvalidExternalArtifact` (código
+  `invalid_input`).
 
 ## Reglas, contratos y restricciones
 
@@ -103,7 +104,7 @@ escrito (`--from-artifact`), verificando su integridad con SHA-256.
 - Entry point no ambiguo (`user_prompt`) o entrada externa que acepte exactamente un artefacto.
 - `not_applicable` solo en ancestros del entry phase.
 - SHA-256 del artefacto externo persistido y verificado luego por `validate`.
-- Manifest inicial: `schema_version 0.1`, `kind work-item`, `status active`, `revision 1`,
+- Manifest inicial: `schema_version 1.0` (y `workflow.version` igual al `schema_version` del workflow), `kind work-item`, `status active`, `revision 1`,
   `traceability.events = events.jsonl`.
 
 ## Errores y códigos

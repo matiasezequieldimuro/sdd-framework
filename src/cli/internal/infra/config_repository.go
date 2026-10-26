@@ -31,8 +31,8 @@ func (repository *FSConfigRepository) GetConfig(baseDir string) (*domain.Config,
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse config.yaml: %w", err)
 	}
-	if config.SchemaVersion != "0.1" {
-		return nil, fmt.Errorf("%w: unsupported config schema version %q", domain.ErrSchemaValidation, config.SchemaVersion)
+	if err := domain.ValidateContractSchemaVersion("config.yaml", config.SchemaVersion); err != nil {
+		return nil, err
 	}
 	if err := domain.ValidateIdentifier("default workflow", config.Defaults.Workflow); err != nil {
 		return nil, err

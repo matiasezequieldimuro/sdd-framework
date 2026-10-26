@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "trazabilidad-por-eventos"
 capability: "record-event / events.jsonl"
@@ -33,7 +33,7 @@ fuentes de verdad del work item.
 
 ### Estructura de un evento (`domain.Event` / `event.schema.json`)
 
-Campos: `schema_version` (const `"0.1"`), `id` (string no vacío), `at` (RFC3339Nano UTC,
+Campos: `schema_version` (`enum ["0.1","1.0"]`: `"0.1"` se acepta solo por la inmutabilidad del histórico, como excepción temporal hasta que exista la migración; el motor escribe `"1.0"`), `id` (string no vacío), `at` (RFC3339Nano UTC,
 formato `date-time`), `work_item` (kebab-case), `type` (patrón
 `^[a-z_]+(?:[.-][a-z_]+)*$`), `actor` (`{ kind: human|agent|cli|system, id }`), `data`
 (objeto) y `correlation_id` (opcional). `additionalProperties: false`. El `id` lo produce el
@@ -100,7 +100,7 @@ formato `date-time`), `work_item` (kebab-case), `type` (patrón
 ## Reglas, contratos y restricciones
 
 - Log append-only, una línea JSON por evento, con `fsync`.
-- `type` restringido por patrón; `schema_version` const `0.1`; `actor.kind` acotado al enum.
+- `type` restringido por patrón; `schema_version` enum `0.1`/`1.0` (excepción temporal de histórico; los eventos nuevos son `1.0`); `actor.kind` acotado al enum.
 - `correlation_id` opcional pero, si se usa, garantiza idempotencia por búsqueda en el log.
 - `record-event` opera solo sobre work items **activos** (usa `GetWorkItem`); los archivados
   son inmutables.
@@ -127,7 +127,7 @@ No aplica (especificación reconstruida).
 - **Pendiente/Desconocido**: `record-event` no expone un flag para poblar `data` arbitrario:
   el `RecordEventInput.Data` existe en el use case pero el comando solo inyecta `message`. La
   observabilidad de tokens/costos (`observability.token_usage`) está modelada en el manifest y
-  el schema pero no se recolecta como eventos reales en la BETA.
+  el schema pero no se recolecta como eventos reales en la v1.0.0.
 
 ## Trazabilidad
 

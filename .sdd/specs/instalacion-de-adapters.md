@@ -1,5 +1,5 @@
 ---
-schema_version: "0.1"
+schema_version: "1.0"
 kind: reconstructed-spec
 id: "instalacion-de-adapters"
 capability: "adapters"
@@ -24,9 +24,14 @@ sources:
 El comando `adapters` gestiona el catálogo de **adapters de agente** embebidos en el binario
 (`embeds.DefaultAdapterResources`, `//go:embed all:default_adapters`) y los materializa sobre
 un proyecto ya inicializado. Un adapter traduce los roles del contrato SDD a una herramienta
-concreta de codificación. En la BETA el único adapter provisto es **`claude-code`**
+concreta de codificación. En la v1.0.0 el único adapter provisto es **`claude-code`**
 (`src/adapters/claude-code/`), que aporta `CLAUDE.md`, `.mcp.json` y el árbol `.claude/`
-(agents, hooks, settings).
+(7 agents `sdd-*`; skills que envuelven capabilities —incluida `verify-ui`— más skills
+operativas `sdd-cli`, `git-commit`, `git-worktree`, `pull-request` y
+`certificate-weekly-hs`; commands `/sdd:*` —incluidos `/sdd:rework` y `/sdd:cancel`— y
+`/certificate-weekly-hs`; hooks `protect-secrets.py` / `protect-sdd-paths.py`;
+`settings.json` con permisos, incluidos los de `playwright-cli`; y
+`settings.local.json.example`). Todo se instala en cada proyecto: no hay selección parcial.
 
 ### `adapters list`
 
@@ -91,7 +96,7 @@ concreta de codificación. En la BETA el único adapter provisto es **`claude-co
 No aplica (especificación reconstruida).
 
 - **Pendiente/Desconocido**: el conjunto exacto de adapters disponibles se deriva en runtime
-  del contenido embebido; en la BETA solo se confirma `claude-code`. La instalación **no** es
+  del contenido embebido; en la v1.0.0 solo se confirma `claude-code`. La instalación **no** es
   incremental ni actualiza un adapter ya presente (falla por colisión); no se observó un flujo
   de "update/upgrade" de adapters.
 
@@ -102,3 +107,5 @@ No aplica (especificación reconstruida).
 - `src/cli/internal/infra/fs_adapter_repository.go` — catálogo, colisiones, staging/publish/rollback.
 - `src/cli/embeds/embeds.go` — `//go:embed all:default_adapters`.
 - `src/adapters/claude-code/` — contenido del adapter provisto.
+- `src/cli/internal/infra/fs_adapter_repository_test.go` — archivos instalados esperados y
+  `TestClaudeCodeSkillsReferenceRegisteredCapabilities` (skills ↔ capabilities registradas).

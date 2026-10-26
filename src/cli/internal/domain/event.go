@@ -29,7 +29,7 @@ type Event struct {
 
 func NewEvent(id string, at time.Time, workItemID, eventType string, actor Actor, data map[string]interface{}) Event {
 	return Event{
-		SchemaVersion: "0.1",
+		SchemaVersion: ContractSchemaVersion,
 		ID:            id,
 		At:            at.UTC().Format(time.RFC3339Nano),
 		WorkItem:      workItemID,

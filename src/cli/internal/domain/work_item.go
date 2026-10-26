@@ -183,7 +183,7 @@ func NewWorkItem(workflow *Workflow, params NewWorkItemParams) (*WorkItem, Phase
 	}
 
 	item := &WorkItem{
-		SchemaVersion: "0.1",
+		SchemaVersion: ContractSchemaVersion,
 		Kind:          "work-item",
 		ID:            params.ID,
 		Title:         params.Title,

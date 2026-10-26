@@ -1,10 +1,10 @@
 name: Release
 
 # Crea un GitHub Release con binarios multiplataforma cuando se publica un tag
-# semver (ej. v0.1.0-beta). El versionado es manual: el tag dispara el build.
+# semver (ej. v1.0.0). El versionado es manual: el tag dispara el build.
 #
-#   git tag v0.1.0-beta
-#   git push origin v0.1.0-beta
+#   git tag v1.0.0
+#   git push origin v1.0.0
 on:
   push:
     tags:

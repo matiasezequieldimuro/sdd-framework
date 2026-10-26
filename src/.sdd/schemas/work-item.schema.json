@@ -5,7 +5,7 @@
   "type": "object",
   "required": ["schema_version", "kind", "id", "revision", "title", "type", "status", "created_at", "created_by", "workflow", "input", "phases", "traceability"],
   "properties": {
-    "schema_version": { "const": "0.1" },
+    "schema_version": { "const": "1.0" },
     "kind": { "const": "work-item" },
     "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
     "revision": { "type": "integer", "minimum": 1 },

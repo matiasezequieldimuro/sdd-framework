@@ -1,6 +1,6 @@
 # El workflow de SDD
 
-> Estado: **BETA**.
+> Estado: **Estable** (`v1.0.0`).
 > Audiencia: cualquier persona que quiera entender cómo trabaja el framework SDD.
 > Alcance: escenarios modelados, fases, gates, artefactos y fuentes de verdad.
 
@@ -58,6 +58,21 @@ reparte en tres archivos con roles distintos:
 - Los **artefactos** (`artifacts/`) son la evidencia legible: PRD, plan, reporte, etc.
 - Los **eventos** (`events.jsonl`) son el historial inmutable, append-only.
 
+La ubicación del expediente refleja su ciclo de vida:
+
+```text
+.sdd/work-items/
+├── .gitignore                -> creado por init; excluye .locks/ y .transactions/
+├── active/<id>/              -> en curso (manifest, artifacts/, evidence/, events)
+├── archive/YYYY-MM-DD-<id>/  -> cerrados con `sdd-cli archive` (inmutables)
+├── cancelled/<id>/           -> cancelados con `sdd-cli cancel` (ID reservado)
+├── .locks/                   -> runtime: un solo escritor por work item
+└── .transactions/            -> runtime: staging, backups y markers de archive/cancel
+```
+
+`evidence/` guarda la evidencia cruda de verificación (logs, capturas, reportes); se cita
+desde los artefactos.
+
 El estado **no** se deduce leyendo el chat ni buscando checkboxes dentro del Markdown:
 se lee del manifest. Git conserva todo esto versionado, y sigue siendo la fuente de
 verdad última del repositorio.
@@ -85,10 +100,23 @@ Estados de una fase:
 blocked -> ready -> in_progress -> awaiting_approval -> approved -> completed
                                  \-> completed (si no tiene gate)
 awaiting_approval -> rejected -> in_progress (retrabajo)
+completed | approved | accepted -> ready            (rework de la fase)
+descendientes -> superseded (o ready -> blocked)    (rework en cascada)
+superseded -> in_progress                           (begin, con dependencias satisfechas)
 ```
+
+Además: `not_applicable` marca las fases previas a un inicio desde artefacto y `accepted`
+la fase de entrada importada sin gate (ver sección 7).
 
 Un rechazo no borra el trabajo anterior: se reabre la fase con `begin` y la nueva
 entrega crea otra iteración de aprobación, conservando el historial.
+
+Si una fase ya cerrada debe rehacerse (por ejemplo cambió la especificación después de
+aprobar el plan), `sdd-cli rework <id> --phase <fase> --reason <motivo>` la devuelve a
+`ready` y marca como `superseded` las fases descendientes que ya se habían trabajado. Si el
+work item estaba `completed`, vuelve a `active`. Para abandonar un work item activo,
+`sdd-cli cancel <id> --reason <motivo>` lo mueve a `cancelled/` de forma irreversible y
+reserva su ID. Detalle en [CLI.md](./CLI.md).
 
 **Regla de oro:** ninguna fase se saltea. Lo único que el usuario puede hacer es
 *empezar más adelante* si ya trae un artefacto hecho (ver sección 7); a partir de ahí,
@@ -98,7 +126,7 @@ toda fase posterior se ejecuta sin excepción.
 
 ## 5. Escenarios principales (workflows con fases)
 
-Estos escenarios sí tienen múltiples fases con aprobación obligatoria. En la BETA el
+Estos escenarios sí tienen múltiples fases con aprobación obligatoria. En la v1.0.0 el
 motor implementa cinco workflows:
 
 | Workflow | Para qué | Entry points | Flujo principal |
@@ -115,15 +143,18 @@ motor implementa cinco workflows:
 | --- | --- | --- | --- | --- | --- |
 | PRD | Requerido | — | — | — | — |
 | Change Request | — | Requerido | — | — | — |
+| Issue | — | — | — | Ninguno | Ninguno |
+| Exploration / debugging | — | — | — | Ninguno (`exploration`) | Ninguno (`debugging`) |
 | Specification | Requerido | Requerido | — | — | — |
 | Plan | Requerido | Requerido | Requerido | Requerido | Requerido |
 | Implementation | Ninguno | Ninguno | Ninguno | Ninguno | Ninguno |
 | Verification | Ninguno | Ninguno | Ninguno | Ninguno | Ninguno |
 | Human code review | Requerido | Requerido | Requerido | Requerido | Requerido |
-| Archive | Opcional | Opcional | Opcional | Opcional | Opcional |
+| Archive | Ninguno (fase opcional) | Ninguno (fase opcional) | Ninguno (fase opcional) | Ninguno (fase opcional) | Ninguno (fase opcional) |
 
 El **plan** y el **human code review** siempre tienen gate humano: son los dos puntos
-donde una persona confirma dirección y resultado. `archive` es opcional en los cinco.
+donde una persona confirma dirección y resultado. `archive` es una fase opcional sin gate
+en los cinco: `complete` puede cerrar el work item sin ejecutarla.
 
 ### 5.2. Grafo de una feature estándar
 
@@ -212,7 +243,8 @@ El artefacto debe corresponder a un **entry point** declarado por el workflow. E
 - resuelve su path absoluto y calcula su SHA-256 (integridad);
 - lo importa al artefacto canónico;
 - marca las fases anteriores como `not_applicable`;
-- deja la fase de entrada lista según su gate.
+- deja la fase de entrada en `awaiting_approval` si su gate es requerido, o en `accepted`
+  si no lo tiene.
 
 De ahí en adelante, todas las fases posteriores se ejecutan normalmente.
 
@@ -226,6 +258,7 @@ Hay dos cierres complementarios que **no** son sinónimos:
 | --- | --- | --- |
 | `deliver --phase archive` | Redactar y registrar el trabajo de cierre | La fase queda satisfecha y `artifacts/archive.md` conserva la evidencia. |
 | `sdd-cli archive <id>` | Cerrar físicamente un expediente ya válido | El work item pasa de `active/` a `archive/YYYY-MM-DD-<id>/` y queda inmutable. |
+| `sdd-cli cancel <id>` | Abandonar un work item activo | El work item pasa de `active/` a `cancelled/<id>/`, sin validar ni completar fases; su ID queda reservado. |
 
 La primera no mueve directorios; la segunda no redacta evidencia. Separarlas evita que
 un agente archive un expediente cuya consolidación todavía no fue documentada.
@@ -253,14 +286,17 @@ sdd-cli adapters install claude-code
 Para un proyecto existente. Además del setup, el agente explora el repositorio (docs y
 codebase) para generar la documentación de contexto en `.sdd/context/`:
 
-- `software-architecture.md`
-- `project-architecture.md`
-- `data-modeling.md`
-- `data-and-process-flow.md`
-- `domain-language.md`
+- `project.md`
+- `architecture/software-architecture.md`
+- `architecture/project-architecture.md`
+- `architecture/data-modeling.md`
+- `architecture/data-and-process-flow.md`
 
-Estos documentos usan el codebase como fuente de verdad prioritaria y describen la
-arquitectura, el modelo de datos, los flujos y el lenguaje común del dominio.
+Estos documentos usan el codebase como fuente de verdad prioritaria y describen el
+proyecto, la arquitectura, el modelo de datos y los flujos. `domain-language.md` no se
+completa en el onboarding: se construye progresivamente durante el trabajo. En proyectos
+con funcionalidad ya implementada, el onboarding también reconstruye una spec por
+funcionalidad en `.sdd/specs/`.
 
 ### 9.3. Consulta técnica o funcional
 
