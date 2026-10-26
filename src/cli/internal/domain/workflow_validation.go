@@ -53,8 +53,9 @@ func (workflow *Workflow) SemanticViolations() []ContractViolation {
 			violations = append(violations, NewContractViolation(
 				"workflow.phase_artifact_count_invalid",
 				ErrInvalidWorkflow,
-				"phase %s must produce exactly one artifact in contract v0.1",
+				"phase %s must produce exactly one artifact in contract v%s",
 				phase.ID,
+				ContractSchemaVersion,
 			))
 		}
 	}
@@ -337,6 +338,39 @@ func (workflow *Workflow) Ancestors(phaseID string) (map[string]struct{}, error)
 	visit(phaseID)
 
 	return ancestors, nil
+}
+
+// Descendants returns the set of all phase IDs that transitively depend on the
+// given phase (i.e., all phases that have phaseID as a direct or transitive
+// dependency). Returns ErrPhaseNotFound if the phase does not exist in the
+// workflow. The returned set never includes phaseID itself.
+func (workflow *Workflow) Descendants(phaseID string) (map[string]struct{}, error) {
+	if _, exists := workflow.Phase(phaseID); !exists {
+		return nil, ErrPhaseNotFound
+	}
+
+	// Build a children map: parent → list of phases that require it.
+	children := make(map[string][]string, len(workflow.Phases))
+	for _, phase := range workflow.Phases {
+		for _, requiredID := range phase.Requires {
+			children[requiredID] = append(children[requiredID], phase.ID)
+		}
+	}
+
+	descendants := make(map[string]struct{})
+	var visit func(string)
+	visit = func(currentID string) {
+		for _, childID := range children[currentID] {
+			if _, seen := descendants[childID]; seen {
+				continue
+			}
+			descendants[childID] = struct{}{}
+			visit(childID)
+		}
+	}
+	visit(phaseID)
+
+	return descendants, nil
 }
 
 func (workflow *Workflow) reachableFromEntries() map[string]struct{} {

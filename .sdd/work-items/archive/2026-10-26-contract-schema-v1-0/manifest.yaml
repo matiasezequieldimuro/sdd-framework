@@ -1,0 +1,51 @@
+schema_version: "1.0"
+kind: work-item
+id: contract-schema-v1-0
+revision: 15
+title: Migrar schema_version del contrato a 1.0
+type: fast-change
+status: archived
+created_at: "2026-10-26T19:53:56Z"
+created_by:
+    kind: agent
+    id: sdd-orchestrator
+workflow:
+    id: fast-change
+    version: "1.0"
+    entry_phase: plan
+input:
+    source: user_prompt
+    summary: 'Release v1.0.0: el contrato pasa de schema_version 0.1 a 1.0 (config, registry, workflows, adapter, schemas JSON, manifests y markers de transacciones). El motor escribe y exige 1.0. Excepcion temporal: event.schema.json acepta enum [0.1, 1.0] para que events.jsonl historico quede inmutable, hasta que exista un comando/script de migracion (pendiente, se registra en CHANGELOG). Incluye actualizar tests, fixtures, copia dogfooding .sdd/ de la raiz y specs/context afectados. La migracion de proyectos existentes (manifests, incluidos archivados/cancelados) la hace el usuario manualmente.'
+phases:
+    archive:
+        status: completed
+        artifact: artifacts/archive.md
+    human-code-review:
+        status: approved
+        artifact: artifacts/human-code-review.md
+    implementation:
+        status: completed
+        artifact: artifacts/implementation-report.md
+    plan:
+        status: approved
+        artifact: artifacts/plan.md
+    verification:
+        status: completed
+        artifact: artifacts/verification-report.md
+approvals:
+    - phase: plan
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-26T20:10:01Z"
+      comment: Plan aprobado con O1-O4 según recomendación
+    - phase: human-code-review
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-26T20:27:11Z"
+      comment: 'Aprobado sin revisar el diff: el revisor no revisó el código por falta de tiempo y confía en la implementación y la verificación.'
+traceability:
+    events: events.jsonl

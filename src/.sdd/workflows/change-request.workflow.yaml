@@ -1,4 +1,4 @@
-schema_version: "0.1"
+schema_version: "1.0"
 kind: workflow
 id: change-request
 title: Cambio de requerimientos

@@ -9,7 +9,7 @@ import (
 
 // Build metadata. These values are overridden at build time via -ldflags, e.g.
 //
-//	go build -ldflags "-X sdd-cli/cmd.version=v0.1.0 -X sdd-cli/cmd.commit=abc1234 -X sdd-cli/cmd.date=2026-09-16"
+//	go build -ldflags "-X sdd-cli/cmd.version=v1.0.0 -X sdd-cli/cmd.commit=abc1234 -X sdd-cli/cmd.date=2026-09-16"
 //
 // When built without ldflags (local development) they keep the defaults below.
 var (

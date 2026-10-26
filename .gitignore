@@ -25,3 +25,17 @@ docs/internal/
 
 # AI Agents — solo el .claude de la raíz del repo; src/adapters/*/.claude debe ser trackeado
 /.claude
+
+# Adapter-generated CLAUDE.md at repo root (src/adapters/*/CLAUDE.md must remain tracked)
+/CLAUDE.md
+# SDD engine runtime state (locks and transaction staging/backups)
+.sdd/work-items/.locks/
+.sdd/work-items/.transactions/
+
+# SDD engine runtime state (locks and in-flight transactions)
+.sdd/work-items/.locks/
+.sdd/work-items/.transactions/
+
+# Raw verification evidence of every work item stays local (may contain heavy files:
+# screenshots, video, traces). Cited from artifacts, never versioned.
+.sdd/work-items/*/*/evidence/

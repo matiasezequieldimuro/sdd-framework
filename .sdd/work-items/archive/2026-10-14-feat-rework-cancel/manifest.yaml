@@ -1,0 +1,85 @@
+schema_version: "1.0"
+kind: work-item
+id: feat-rework-cancel
+revision: 45
+title: Comandos rework y cancel para work items
+type: feature
+status: archived
+created_at: "2026-10-07T00:20:17Z"
+created_by:
+    kind: human
+    id: matias
+workflow:
+    id: feature-standard
+    version: "1.0"
+    entry_phase: prd
+input:
+    source: user_prompt
+    summary: Implementar sdd-cli rework (propagación superseded) y sdd-cli cancel (nuevo estado cancelled con directorio físico)
+phases:
+    archive:
+        status: completed
+        artifact: artifacts/archive.md
+    human-code-review:
+        status: approved
+        artifact: artifacts/human-code-review.md
+    implementation:
+        status: completed
+        artifact: artifacts/implementation-report.md
+    plan:
+        status: approved
+        artifact: artifacts/plan.md
+    prd:
+        status: approved
+        artifact: artifacts/prd.md
+    specification:
+        status: approved
+        artifact: artifacts/specification.md
+    verification:
+        status: completed
+        artifact: artifacts/verification-report.md
+approvals:
+    - phase: prd
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-07T00:36:03Z"
+      comment: Aprobado
+    - phase: specification
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-07T02:13:23Z"
+      comment: Aprobado
+    - phase: plan
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-07T12:47:56Z"
+      comment: Aprobado
+    - phase: human-code-review
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-14T15:41:53Z"
+      comment: Aprobado
+    - phase: human-code-review
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-14T17:16:20Z"
+      comment: Aprobado (ciclo 2)
+    - phase: human-code-review
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-14T17:25:49Z"
+      comment: Aprobado
+traceability:
+    events: events.jsonl

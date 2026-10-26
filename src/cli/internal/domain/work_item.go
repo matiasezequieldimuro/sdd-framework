@@ -115,6 +115,15 @@ type PhaseMutation struct {
 	Unblocked  []PhaseTransition
 }
 
+// ReworkMutation captures the full set of state changes produced by ReworkPhase.
+// Superseded holds all descendant transitions (both to superseded and to blocked),
+// in topological order.
+type ReworkMutation struct {
+	Reactivated bool              // true if the work item transitioned from completed to active
+	Target      PhaseTransition   // the phase objective's transition to ready
+	Superseded  []PhaseTransition // descendant transitions (superseded or re-blocked), topological order
+}
+
 type NextPhase struct {
 	Definition WorkflowPhase
 	State      PhaseState
@@ -174,7 +183,7 @@ func NewWorkItem(workflow *Workflow, params NewWorkItemParams) (*WorkItem, Phase
 	}
 
 	item := &WorkItem{
-		SchemaVersion: "0.1",
+		SchemaVersion: ContractSchemaVersion,
 		Kind:          "work-item",
 		ID:            params.ID,
 		Title:         params.Title,
@@ -224,6 +233,11 @@ func (item *WorkItem) BeginPhase(workflow *Workflow, phaseID string) (PhaseMutat
 	}
 	if state.Status != PhaseReady && state.Status != PhaseRejected && state.Status != PhaseSuperseded {
 		return PhaseMutation{}, invalidPhaseTransition(phaseID, state.Status, PhaseInProgress)
+	}
+	// A superseded phase is restarted only once its predecessors are satisfied
+	// again; otherwise a rework could be bypassed by restarting a descendant.
+	if state.Status == PhaseSuperseded && !item.dependenciesSatisfied(phase) {
+		return PhaseMutation{}, fmt.Errorf("%w: phase %s cannot restart from superseded until its dependencies are satisfied", ErrInvalidTransition, phaseID)
 	}
 
 	return item.transition(phaseID, PhaseInProgress), nil
@@ -448,6 +462,87 @@ func (item *WorkItem) archiveEligibility(workflow *Workflow) error {
 	return nil
 }
 
+// ReworkPhase resets the indicated phase to ready and propagates the change
+// transitively to all descendant phases according to the rework propagation
+// rules. If the work item is in completed status it is reactivated to active.
+//
+// Preconditions (PC-RW-02 to PC-RW-05 per specification):
+//   - The work item must not be archived or cancelled.
+//   - The work item must be active or completed.
+//   - The phase must exist in both the workflow and the manifest.
+//   - The phase must currently be completed, approved, or accepted.
+//
+// Propagation rules for each descendant (in topological order):
+//   - completed, approved, accepted, in_progress, awaiting_approval, rejected → superseded
+//   - ready → blocked (was unlocked but not started; re-locked by rework)
+//   - blocked, not_applicable, superseded → no change
+//
+// Revision is NOT incremented here; the infra layer handles that on commit.
+func (item *WorkItem) ReworkPhase(workflow *Workflow, phaseID string) (ReworkMutation, error) {
+	if workflow == nil {
+		return ReworkMutation{}, fmt.Errorf("%w: workflow is required", ErrInvalidWorkItem)
+	}
+	if item.Status == WorkItemArchived || item.Status == WorkItemCancelled {
+		return ReworkMutation{}, fmt.Errorf("%w: work item status is %s", ErrInvalidTransition, item.Status)
+	}
+	if item.Status != WorkItemActive && item.Status != WorkItemCompleted {
+		return ReworkMutation{}, fmt.Errorf("%w: work item status is %s", ErrInvalidTransition, item.Status)
+	}
+	_, state, err := item.phase(workflow, phaseID)
+	if err != nil {
+		return ReworkMutation{}, err
+	}
+	if state.Status != PhaseCompleted && state.Status != PhaseApproved && state.Status != PhaseAccepted {
+		return ReworkMutation{}, invalidPhaseTransition(phaseID, state.Status, PhaseReady)
+	}
+
+	var mutation ReworkMutation
+	if item.Status == WorkItemCompleted {
+		item.Status = WorkItemActive
+		mutation.Reactivated = true
+	}
+	// Transition the target phase to ready (From is set from current state by item.transition).
+	mutation.Target = item.transition(phaseID, PhaseReady).Transition
+
+	descendants, err := workflow.Descendants(phaseID)
+	if err != nil {
+		return ReworkMutation{}, err
+	}
+	ordered, err := workflow.OrderedPhases()
+	if err != nil {
+		return ReworkMutation{}, err
+	}
+	for _, phase := range ordered {
+		if _, isDescendant := descendants[phase.ID]; !isDescendant {
+			continue
+		}
+		current := item.Phases[phase.ID].Status
+		switch current {
+		case PhaseNotApplicable, PhaseBlocked, PhaseSuperseded:
+			// No change: already in a terminal or non-started state for rework purposes.
+			continue
+		case PhaseReady:
+			// Unlocked but not started — re-block it (RB-RW-02).
+			mutation.Superseded = append(mutation.Superseded, item.transition(phase.ID, PhaseBlocked).Transition)
+		default:
+			// Phase was actively worked — mark as superseded (RB-RW-02).
+			mutation.Superseded = append(mutation.Superseded, item.transition(phase.ID, PhaseSuperseded).Transition)
+		}
+	}
+	return mutation, nil
+}
+
+// Cancel transitions the work item to cancelled status. Only active work items
+// may be cancelled (PC-CA-02). Phase states are not modified (POST-CA-03).
+// Revision is NOT incremented here; the infra layer handles that on commit.
+func (item *WorkItem) Cancel() error {
+	if item.Status != WorkItemActive {
+		return fmt.Errorf("%w: current status is %s", ErrWorkItemCannotCancel, item.Status)
+	}
+	item.Status = WorkItemCancelled
+	return nil
+}
+
 func (item *WorkItem) NextPhase(workflow *Workflow) (*NextPhase, error) {
 	orderedPhases, err := workflow.OrderedPhases()
 	if err != nil {
@@ -460,6 +555,14 @@ func (item *WorkItem) NextPhase(workflow *Workflow) (*NextPhase, error) {
 			if exists && state.Status == status {
 				return &NextPhase{Definition: phase, State: state}, nil
 			}
+		}
+	}
+	// After a rework, superseded phases become actionable again once their
+	// predecessors are satisfied.
+	for _, phase := range orderedPhases {
+		state, exists := item.Phases[phase.ID]
+		if exists && state.Status == PhaseSuperseded && item.dependenciesSatisfied(phase) {
+			return &NextPhase{Definition: phase, State: state}, nil
 		}
 	}
 

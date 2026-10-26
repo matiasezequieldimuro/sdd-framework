@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "1.0",
   "kind": "work-item",
   "id": "cr-003-billing-info",
   "revision": 2,
@@ -13,7 +13,7 @@
   },
   "workflow": {
     "id": "change-request",
-    "version": "0.1",
+    "version": "1.0",
     "entry_phase": "change-request"
   },
   "input": {

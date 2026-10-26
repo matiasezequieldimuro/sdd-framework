@@ -18,20 +18,52 @@ type NextAction struct {
 }
 
 type NextUseCase struct {
-	workItemRepo ports.WorkItemReader
-	workflowRepo ports.WorkflowRepository
+	workItemRepo     ports.WorkItemReader
+	workflowRepo     ports.WorkflowRepository
+	cancelledChecker ports.CancelledWorkItemChecker
 }
 
-func NewNextUseCase(wiRepo ports.WorkItemReader, wfRepo ports.WorkflowRepository) *NextUseCase {
+// NewNextUseCase constructs a NextUseCase.
+//
+// @param cancelledChecker Optional checker; when provided, next returns a
+//
+//	diagnostic error for cancelled work items instead of a generic not_found
+//	(CA-CA-09 / ESC-CA-06). Pass the FSWorkItemRepository which satisfies
+//	CancelledWorkItemChecker.
+func NewNextUseCase(
+	wiRepo ports.WorkItemReader,
+	wfRepo ports.WorkflowRepository,
+	cancelledCheckers ...ports.CancelledWorkItemChecker,
+) *NextUseCase {
+	var checker ports.CancelledWorkItemChecker
+	if len(cancelledCheckers) > 0 {
+		checker = cancelledCheckers[0]
+	}
 	return &NextUseCase{
-		workItemRepo: wiRepo,
-		workflowRepo: wfRepo,
+		workItemRepo:     wiRepo,
+		workflowRepo:     wfRepo,
+		cancelledChecker: checker,
 	}
 }
 
 func (uc *NextUseCase) Execute(baseDir, id string) (*NextAction, error) {
 	item, err := uc.workItemRepo.GetWorkItem(baseDir, id)
 	if err != nil {
+		// Provide a differentiated diagnostic when the ID belongs to a cancelled
+		// work item (CA-CA-09 / ESC-CA-06).
+		if uc.cancelledChecker != nil {
+			isCancelled, checkErr := uc.cancelledChecker.WorkItemCancelledExists(baseDir, id)
+			if checkErr != nil {
+				return nil, checkErr
+			}
+			if isCancelled {
+				return nil, fmt.Errorf(
+					"%w: work item '%s' was cancelled",
+					domain.ErrWorkItemCancelled,
+					id,
+				)
+			}
+		}
 		return nil, fmt.Errorf("failed to get work item: %w", err)
 	}
 

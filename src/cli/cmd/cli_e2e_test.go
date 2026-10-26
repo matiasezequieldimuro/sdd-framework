@@ -348,6 +348,259 @@ func TestCLIListsAndInstallsClaudeCodeAdapter(t *testing.T) {
 	}
 }
 
+// TestCLIReworkAndCancelCommands exercises the rework and cancel commands end-to-end
+// using the compiled CLI binary (plan D: CA-RW-01/02/12, CA-CA-01/05/07/09/10).
+func TestCLIReworkReactivatedWorkItemCanBeValidatedAndArchived(t *testing.T) {
+	binary := buildTestBinary(t)
+	projectDir := t.TempDir()
+	id := "reactivate-e2e"
+
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir, "init")
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"start", id, "--workflow", "fast-change", "--title", "Reactivation E2E test",
+	)
+
+	// plan starts in_progress; the remaining phases must be begun first.
+	runPhases := func(round string, phases []string, begin map[string]bool, approve map[string]bool) {
+		for _, phase := range phases {
+			if begin[phase] {
+				runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+					"begin", id, "--phase", phase, "--operation-id", id+":"+round+":begin:"+phase)
+			}
+			runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+				"deliver", id, "--phase", phase, "--operation-id", id+":"+round+":deliver:"+phase)
+			if approve[phase] {
+				runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+					"approve", id, "--phase", phase, "--by", "e2e-tester", "--operation-id", id+":"+round+":approve:"+phase)
+			}
+		}
+		runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+			"complete", id, "--operation-id", id+":"+round+":complete")
+		runJSONBinary(t, binary, 0, "--json", "--dir", projectDir, "validate", id)
+	}
+
+	downstream := []string{"implementation", "verification", "human-code-review", "archive"}
+	beginAll := map[string]bool{"implementation": true, "verification": true, "human-code-review": true, "archive": true}
+	approvals := map[string]bool{"plan": true, "human-code-review": true}
+
+	runPhases("first", append([]string{"plan"}, downstream...), beginAll, approvals)
+
+	// Rework a phase of the completed item: it is reactivated and must still validate.
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"rework", id, "--phase", "implementation", "--reason", "Defect found after completion",
+		"--actor-kind", "human", "--actor-id", "e2e-tester",
+	)
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir, "validate", id)
+
+	// Complete it again and archive it: lifecycle continuity must hold.
+	runPhases("second", downstream, beginAll, approvals)
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir, "archive", id)
+}
+
+func TestCLIReworkAndCancelCommands(t *testing.T) {
+	binary := buildTestBinary(t)
+	projectDir := t.TempDir()
+
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir, "init")
+
+	// ---- REWORK SCENARIO ----
+
+	// Start fast-change work item and progress through plan approval and implementation delivery.
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"start", "rework-e2e",
+		"--workflow", "fast-change",
+		"--title", "Rework E2E test",
+		"--operation-id", "rework-e2e:start",
+	)
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"deliver", "rework-e2e", "--phase", "plan", "--operation-id", "rework-e2e:deliver:plan",
+	)
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"approve", "rework-e2e", "--phase", "plan", "--by", "e2e-tester", "--operation-id", "rework-e2e:approve:plan",
+	)
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"begin", "rework-e2e", "--phase", "implementation", "--operation-id", "rework-e2e:begin:impl",
+	)
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"deliver", "rework-e2e", "--phase", "implementation", "--operation-id", "rework-e2e:deliver:impl",
+	)
+
+	// Rework plan → exit 0, JSON work_item with plan=ready and implementation=superseded.
+	reworkResult := runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"rework", "rework-e2e",
+		"--phase", "plan",
+		"--reason", "Needs rethink",
+		"--operation-id", "rework-e2e:rework:plan",
+	)
+	reworkData := responseData(t, reworkResult)
+	workItem, ok := reworkData["work_item"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("rework result work_item = %#v", reworkData["work_item"])
+	}
+	phases, ok := workItem["phases"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("rework result phases = %#v", workItem["phases"])
+	}
+	planPhase, ok := phases["plan"].(map[string]interface{})
+	if !ok || planPhase["status"] != "ready" {
+		t.Fatalf("plan phase after rework = %#v", phases["plan"])
+	}
+	implPhase, ok := phases["implementation"].(map[string]interface{})
+	if !ok || implPhase["status"] != "superseded" {
+		t.Fatalf("implementation phase after rework = %#v", phases["implementation"])
+	}
+
+	// Idempotency: retry rework with same operation-id → events file unchanged.
+	reworkEventsPath := filepath.Join(projectDir, ".sdd", "work-items", "active", "rework-e2e", "events.jsonl")
+	eventsBeforeRetry, err := os.ReadFile(reworkEventsPath)
+	if err != nil {
+		t.Fatalf("ReadFile() rework events error = %v", err)
+	}
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"rework", "rework-e2e",
+		"--phase", "plan",
+		"--reason", "Needs rethink",
+		"--operation-id", "rework-e2e:rework:plan", // same operation-id
+	)
+	eventsAfterRetry, err := os.ReadFile(reworkEventsPath)
+	if err != nil {
+		t.Fatalf("ReadFile() rework events after retry error = %v", err)
+	}
+	if !bytes.Equal(eventsBeforeRetry, eventsAfterRetry) {
+		t.Fatal("rework retry changed the events file (not idempotent)")
+	}
+
+	// Begin plan after rework succeeds (CA-RW-02).
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"begin", "rework-e2e", "--phase", "plan", "--operation-id", "rework-e2e:begin:plan:2",
+	)
+
+	// Error: rework without --reason → invalid_arguments (ESC-RW-06).
+	noReason := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir,
+		"rework", "rework-e2e", "--phase", "plan",
+	)
+	if noReason.Error == nil || noReason.Error.Code != "invalid_arguments" {
+		t.Fatalf("no-reason rework = %#v", noReason)
+	}
+
+	// Error: rework with non-existent phase → not_found (ESC-RW-05).
+	badPhase := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir,
+		"rework", "rework-e2e", "--phase", "nonexistent", "--reason", "test",
+	)
+	if badPhase.Error == nil || badPhase.Error.Code != "not_found" {
+		t.Fatalf("bad-phase rework = %#v", badPhase)
+	}
+
+	// ---- CANCEL SCENARIO ----
+
+	// Start a separate work item for the cancel tests.
+	runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"start", "cancel-e2e",
+		"--workflow", "fast-change",
+		"--title", "Cancel E2E test",
+		"--operation-id", "cancel-e2e:start",
+	)
+
+	// Error: cancel without --reason → invalid_arguments.
+	noReasonCancel := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir,
+		"cancel", "cancel-e2e",
+	)
+	if noReasonCancel.Error == nil || noReasonCancel.Error.Code != "invalid_arguments" {
+		t.Fatalf("no-reason cancel = %#v", noReasonCancel)
+	}
+
+	// Successful cancel with agent actor (CA-CA-07): exit 0, text output.
+	stdout, stderr, exitCode := runTestBinary(binary,
+		"--dir", projectDir,
+		"cancel", "cancel-e2e",
+		"--reason", "No longer needed",
+		"--actor-kind", "agent",
+		"--actor-id", "sdd-agent",
+		"--operation-id", "cancel-e2e:cancel",
+	)
+	if exitCode != 0 || stderr != "" {
+		t.Fatalf("cancel exit = %d, stderr = %q", exitCode, stderr)
+	}
+	if !strings.Contains(stdout, "Work item 'cancel-e2e' cancelled.") {
+		t.Fatalf("cancel text output = %q", stdout)
+	}
+
+	// Active directory must no longer exist (CA-CA-01).
+	activePath := filepath.Join(projectDir, ".sdd", "work-items", "active", "cancel-e2e")
+	if _, err := os.Stat(activePath); !os.IsNotExist(err) {
+		t.Fatalf("active directory still exists after cancel: %v", err)
+	}
+	// Cancelled directory and manifest must exist (CA-CA-01).
+	cancelledManifest := filepath.Join(projectDir, ".sdd", "work-items", "cancelled", "cancel-e2e", "manifest.yaml")
+	if _, err := os.Stat(cancelledManifest); err != nil {
+		t.Fatalf("cancelled manifest missing: %v", err)
+	}
+
+	// Idempotency: repeat cancel with same operation-id → no new events (CA-CA-10).
+	cancelEventsPath := filepath.Join(projectDir, ".sdd", "work-items", "cancelled", "cancel-e2e", "events.jsonl")
+	cancelEventsBeforeRetry, err := os.ReadFile(cancelEventsPath)
+	if err != nil {
+		t.Fatalf("ReadFile() cancel events error = %v", err)
+	}
+	cancelRetried := runJSONBinary(t, binary, 0, "--json", "--dir", projectDir,
+		"cancel", "cancel-e2e",
+		"--reason", "No longer needed",
+		"--operation-id", "cancel-e2e:cancel", // same operation-id
+	)
+	cancelEventsAfterRetry, err := os.ReadFile(cancelEventsPath)
+	if err != nil {
+		t.Fatalf("ReadFile() cancel events after retry error = %v", err)
+	}
+	if !bytes.Equal(cancelEventsBeforeRetry, cancelEventsAfterRetry) {
+		t.Fatal("cancel retry changed the events file (not idempotent)")
+	}
+	cancelRetryData := responseData(t, cancelRetried)
+	if cancelRetryData["location"] != "cancelled" {
+		t.Fatalf("cancel retry location = %#v", cancelRetryData["location"])
+	}
+
+	// ID reservation: start with the same ID → already_exists with "cancelled" in message (CA-CA-05).
+	reserved := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir,
+		"start", "cancel-e2e",
+		"--workflow", "fast-change",
+		"--title", "Reused cancelled ID",
+	)
+	if reserved.Error == nil || reserved.Error.Code != "already_exists" {
+		t.Fatalf("reserved cancelled ID = %#v", reserved)
+	}
+	if !strings.Contains(reserved.Error.Message, "cancel") {
+		t.Fatalf("expected 'cancel' in already_exists message, got %q", reserved.Error.Message)
+	}
+
+	// Opacity: status on cancelled ID → not_found (CA-CA-09 / ESC-CA-06).
+	cancelledStatus := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir, "status", "cancel-e2e")
+	if cancelledStatus.Error == nil || cancelledStatus.Error.Code != "not_found" {
+		t.Fatalf("cancelled status = %#v", cancelledStatus)
+	}
+
+	// Opacity: next on cancelled ID → not_found.
+	cancelledNext := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir, "next", "cancel-e2e")
+	if cancelledNext.Error == nil || cancelledNext.Error.Code != "not_found" {
+		t.Fatalf("cancelled next = %#v", cancelledNext)
+	}
+
+	// Opacity: validate on cancelled ID → not_found.
+	cancelledValidate := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir, "validate", "cancel-e2e")
+	if cancelledValidate.Error == nil || cancelledValidate.Error.Code != "not_found" {
+		t.Fatalf("cancelled validate = %#v", cancelledValidate)
+	}
+
+	// Attempting to cancel again with a different operation-id → invalid_transition (already cancelled).
+	alreadyCancelled := runJSONBinary(t, binary, 1, "--json", "--dir", projectDir,
+		"cancel", "cancel-e2e",
+		"--reason", "Duplicate cancel attempt",
+		"--operation-id", "cancel-e2e:cancel:other",
+	)
+	if alreadyCancelled.Error == nil || alreadyCancelled.Error.Code != "invalid_transition" {
+		t.Fatalf("already-cancelled response = %#v", alreadyCancelled)
+	}
+}
+
 func buildTestBinary(t *testing.T) string {
 	t.Helper()
 	moduleDir, err := filepath.Abs("..")

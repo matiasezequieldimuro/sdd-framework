@@ -12,9 +12,9 @@ El propósito es que sea "agent-agnostic", es decir, pueda ser utilizado indepen
 
 ## PROJECT
 
-En la carpeta "./docs/" encontraras documentación de mi framework que voy generando a medida lo voy diseñando y desarrollando. Siempre prioriza la información del último documento al día; para lo demas puedes cruzar información para tener todo el contexto necesario. El orden de la documentacion esta dado por el numero de cada una.
+En la carpeta "./docs/" encontraras documentación de mi framework que voy generando a medida lo voy diseñando y desarrollando. Siempre prioriza la información del último documento al día; para lo demas puedes cruzar información para tener todo el contexto necesario.
 
-Dentro de "./src/" se encuentra el "motor" que funciona como template para utilzar en otros proyectos (no deberiamos crear work-items ni nada por el estilo en este repositorio, si ajustar el motor).
+Dentro de "./src/" se encuentra el "motor" que funciona como template para utilizar en otros proyectos; los cambios al motor se hacen ahí. Este repositorio usa el propio framework para evolucionarse (dogfooding): los cambios se gobiernan como work items SDD en `.sdd/work-items/`.
 
 ## RULES
 

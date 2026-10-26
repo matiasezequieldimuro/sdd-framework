@@ -5,7 +5,10 @@
   "type": "object",
   "required": ["schema_version", "id", "at", "work_item", "type", "actor", "data"],
   "properties": {
-    "schema_version": { "const": "0.1" },
+    "schema_version": {
+      "$comment": "TEMPORARY: \"0.1\" is accepted only so historical events.jsonl lines stay immutable. The engine writes \"1.0\". Remove \"0.1\" once a migration command/script exists.",
+      "enum": ["0.1", "1.0"]
+    },
     "id": { "type": "string", "minLength": 1 },
     "at": { "type": "string", "format": "date-time" },
     "work_item": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },

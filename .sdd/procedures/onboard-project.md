@@ -32,6 +32,6 @@ Cómo hacerlo:
 
 - Identificar las funcionalidades o casos de uso cohesivos del proyecto y generar **una spec por cada uno**, no una única spec monolítica. Ejemplo: un servicio CAP con casos de uso para analizar facturas mediante IA y para registrar asientos contables en SAP genera dos specs separadas.
 - Reconstruir cada spec desde el codebase como fuente de verdad prioritaria: propósito, comportamiento observable, entradas y salidas, reglas y dependencias. Marcar como pendiente o desconocido lo que no pueda confirmarse.
-- Guardarlas bajo `.sdd/context/specs/`, una por funcionalidad, con nombres descriptivos.
+- Guardarlas bajo `.sdd/specs/`, una por funcionalidad, con nombres descriptivos. Es la ubicación de las specs vigentes (baseline) que leen los agentes y que `validate` acepta en `traceability.baseline_specs`.
 
 Criterio de granularidad: si una funcionalidad puede evolucionar o ajustarse de forma independiente, merece su propia spec.

@@ -65,10 +65,24 @@ func (r *FSWorkItemRepository) WorkItemExists(baseDir, id string) (bool, error) 
 	if err != nil && !errors.Is(err, domain.ErrWorkItemNotFound) {
 		return false, err
 	}
-	if activeExists && archived != nil {
-		return false, fmt.Errorf("%w: work item %s exists in active and archive", domain.ErrArchiveConflict, id)
+	cancelledExists, err := r.WorkItemCancelledExists(baseDir, id)
+	if err != nil {
+		return false, err
 	}
-	return activeExists || archived != nil, nil
+	locations := 0
+	if activeExists {
+		locations++
+	}
+	if archived != nil {
+		locations++
+	}
+	if cancelledExists {
+		locations++
+	}
+	if locations > 1 {
+		return false, fmt.Errorf("%w: work item %s exists in more than one location", domain.ErrArchiveConflict, id)
+	}
+	return locations == 1, nil
 }
 
 func (r *FSWorkItemRepository) GetWorkItem(baseDir, id string) (*domain.WorkItem, error) {
@@ -82,6 +96,23 @@ func (r *FSWorkItemRepository) GetWorkItem(baseDir, id string) (*domain.WorkItem
 	return r.readWorkItemAt(baseDir, filepath.Dir(manifestPath), id)
 }
 
+// requireContractSchemaVersion rejects documents written for another contract version before
+// schema validation, so the error is explicit even when the project's .sdd/schemas are stale.
+// Malformed YAML is intentionally left to schema validation to keep its current error.
+//
+// @param subject human-readable name of the document (used in the error message).
+// @param data raw YAML content of the document.
+// @returns an ErrSchemaValidation error when schema_version differs from the engine's version.
+func requireContractSchemaVersion(subject string, data []byte) error {
+	var header struct {
+		SchemaVersion string `yaml:"schema_version"`
+	}
+	if err := yaml.Unmarshal(data, &header); err != nil {
+		return nil
+	}
+	return domain.ValidateContractSchemaVersion(subject, header.SchemaVersion)
+}
+
 func (r *FSWorkItemRepository) readWorkItemAt(baseDir, workItemPath, id string) (*domain.WorkItem, error) {
 	data, err := os.ReadFile(filepath.Join(workItemPath, "manifest.yaml"))
 	if err != nil {
@@ -89,6 +120,9 @@ func (r *FSWorkItemRepository) readWorkItemAt(baseDir, workItemPath, id string) 
 			return nil, domain.ErrWorkItemNotFound
 		}
 		return nil, fmt.Errorf("failed to read manifest.yaml: %w", err)
+	}
+	if err := requireContractSchemaVersion("work item manifest "+id, data); err != nil {
+		return nil, err
 	}
 	if err := NewSchemaValidator().ValidateYAML(baseDir, "work-item.schema.json", data); err != nil {
 		return nil, err
@@ -281,6 +315,9 @@ func (r *FSWorkItemRepository) CommitWorkItem(baseDir string, commit ports.WorkI
 
 func (r *FSWorkItemRepository) recoverIfNeeded(baseDir, id string) error {
 	if err := r.recoverArchiveIfNeeded(baseDir, id); err != nil {
+		return err
+	}
+	if err := r.recoverCancelIfNeeded(baseDir, id); err != nil {
 		return err
 	}
 	workItemPath, err := r.getWorkItemPath(baseDir, id)
@@ -682,6 +719,9 @@ func (r *FSWorkflowRepository) GetWorkflow(baseDir, workflowID string) (*domain.
 			return nil, domain.ErrWorkflowNotFound
 		}
 		return nil, fmt.Errorf("failed to read workflow file: %w", err)
+	}
+	if err := requireContractSchemaVersion("workflow "+workflowID, data); err != nil {
+		return nil, err
 	}
 	if err := NewSchemaValidator().ValidateYAML(baseDir, "workflow.schema.json", data); err != nil {
 		return nil, err

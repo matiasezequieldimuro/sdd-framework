@@ -20,14 +20,21 @@ type StartWorkItemInput struct {
 }
 
 type StartWorkItemUseCase struct {
-	workItemRepo ports.WorkItemCreationRepository
-	workflowRepo ports.WorkflowRepository
-	configRepo   ports.ConfigRepository
-	artifacts    ports.ArtifactService
-	clock        ports.Clock
-	idGenerator  ports.IDGenerator
+	workItemRepo     ports.WorkItemCreationRepository
+	workflowRepo     ports.WorkflowRepository
+	configRepo       ports.ConfigRepository
+	artifacts        ports.ArtifactService
+	cancelledChecker ports.CancelledWorkItemChecker
+	clock            ports.Clock
+	idGenerator      ports.IDGenerator
 }
 
+// NewStartWorkItemUseCase constructs a StartWorkItemUseCase.
+//
+// @param cancelledChecker Checker for reserving IDs used by prior cancellations
+//
+//	(DD-6 / CA-CA-05). Pass the FSWorkItemRepository which satisfies both
+//	WorkItemCreationRepository and CancelledWorkItemChecker.
 func NewStartWorkItemUseCase(
 	wiRepo ports.WorkItemCreationRepository,
 	wfRepo ports.WorkflowRepository,
@@ -35,14 +42,20 @@ func NewStartWorkItemUseCase(
 	artifacts ports.ArtifactService,
 	clock ports.Clock,
 	idGenerator ports.IDGenerator,
+	cancelledCheckers ...ports.CancelledWorkItemChecker,
 ) *StartWorkItemUseCase {
+	var checker ports.CancelledWorkItemChecker
+	if len(cancelledCheckers) > 0 {
+		checker = cancelledCheckers[0]
+	}
 	return &StartWorkItemUseCase{
-		workItemRepo: wiRepo,
-		workflowRepo: wfRepo,
-		configRepo:   configRepo,
-		artifacts:    artifacts,
-		clock:        clock,
-		idGenerator:  idGenerator,
+		workItemRepo:     wiRepo,
+		workflowRepo:     wfRepo,
+		configRepo:       configRepo,
+		artifacts:        artifacts,
+		cancelledChecker: checker,
+		clock:            clock,
+		idGenerator:      idGenerator,
 	}
 }
 
@@ -74,6 +87,21 @@ func (uc *StartWorkItemUseCase) Execute(baseDir string, in StartWorkItemInput) (
 			}
 			if applied {
 				return uc.workItemRepo.GetWorkItem(baseDir, in.ID)
+			}
+		}
+		// Provide a differentiated message when the ID is reserved by a prior
+		// cancellation (DD-6 / CA-CA-05 / RB-CA-06).
+		if uc.cancelledChecker != nil {
+			isCancelled, checkErr := uc.cancelledChecker.WorkItemCancelledExists(baseDir, in.ID)
+			if checkErr != nil {
+				return nil, checkErr
+			}
+			if isCancelled {
+				return nil, fmt.Errorf(
+					"%w: work item '%s' id is reserved by a prior cancellation",
+					domain.ErrWorkItemAlreadyExists,
+					in.ID,
+				)
 			}
 		}
 		return nil, domain.ErrWorkItemAlreadyExists

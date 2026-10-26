@@ -139,6 +139,7 @@ sdd-cli deliver feat-export-csv \
 | `deliver ... --request-approval` | Request approval for an optional gate only. It is invalid for a `none` gate. |
 | `complete <id> --phase <phase>` | Explicitly complete an `approved` or `accepted` phase. |
 | `complete <id>` | Complete the work item only when all required phases are satisfied. |
+| `rework <id> --phase <phase>` | Reopen a closed phase; see [Rework and cancel](#rework-and-cancel). |
 
 `deliver` resolves the phase according to its declared gate:
 
@@ -176,6 +177,47 @@ sdd-cli reject feat-export-csv \
   it does not overwrite the rejection.
 - Never approve, reject, or infer approval on the user's behalf.
 
+## Rework and cancel
+
+Run these only after the user explicitly requests them in the current
+conversation. Both require `--reason`, which is recorded in the audit log.
+
+Reopen a closed phase when its evidence must change:
+
+```bash
+sdd-cli rework feat-export-csv \
+  --phase specification \
+  --reason "Acceptance criteria changed after review." \
+  --actor-kind human \
+  --actor-id matias \
+  --operation-id run:feat-export-csv:specification:rework
+```
+
+- The target phase must be `completed`, `approved`, or `accepted`; it returns
+  to `ready` and must be restarted with `begin`.
+- Descendant phases that were worked (`in_progress`, `awaiting_approval`,
+  `approved`, `completed`, `accepted`, `rejected`) become `superseded`;
+  descendants in `ready` become `blocked`. Previous approvals no longer apply.
+- A `completed` work item is reactivated. `archived` or `cancelled` items
+  cannot be reworked.
+- Inspect `status` first and tell the user which phases will be superseded.
+
+Abandon an active work item:
+
+```bash
+sdd-cli cancel feat-export-csv \
+  --reason "Out of scope for this release." \
+  --actor-kind human \
+  --actor-id matias \
+  --operation-id run:feat-export-csv:cancel
+```
+
+- Only `active` work items can be cancelled; phase states are preserved.
+- The snapshot moves to `.sdd/work-items/cancelled/<id>/` and is final:
+  `status`, `next`, and `validate` report it as cancelled, and `start` refuses
+  the reserved ID.
+- Cancellation is irreversible. Confirm with the user before running it.
+
 ## Archive and audit
 
 Archive is a two-step closure:
@@ -211,7 +253,8 @@ sdd-cli record-event feat-export-csv \
 ## Mutations and retries
 
 - Mutating commands include `init`, `adapters install`, `start`, `begin`,
-  `deliver`, `approve`, `reject`, `complete`, `archive`, and `record-event`.
+  `deliver`, `approve`, `reject`, `rework`, `cancel`, `complete`, `archive`,
+  and `record-event`.
 - Assign a stable, descriptive `--operation-id` before a mutation when a retry
   might be needed.
 - If the result is uncertain, retry the exact same command with the same

@@ -1,6 +1,6 @@
 # Guía de instalación de sdd-cli
 
-> Estado: **BETA**.
+> Estado: **Estable** (`v1.0.0`).
 > Audiencia: usuarios que quieren instalar y usar el motor SDD.
 > Alcance: instalación del binario `sdd-cli` en Windows, macOS y Linux (Ubuntu/WSL).
 
@@ -32,7 +32,7 @@ Elegí el archivo según tu sistema operativo y arquitectura:
 | macOS Apple Silicon (M1/M2/M3) | arm64 | `sdd-cli_<version>_darwin_arm64.tar.gz` |
 | Windows | x86_64 / amd64 | `sdd-cli_<version>_windows_amd64.zip` |
 
-`<version>` es la etiqueta del release, por ejemplo `v0.1.0-beta`.
+`<version>` es la etiqueta del release, por ejemplo `v1.0.0`.
 Cada release incluye `SHA256SUMS` para verificar la integridad.
 
 Cómo saber tu arquitectura:
@@ -78,12 +78,12 @@ Opciones (variables de entorno):
 
 | Variable | Efecto |
 | --- | --- |
-| `SDD_VERSION` | Instala una versión específica (ej. `v0.1.0-beta`). Default: último release. |
+| `SDD_VERSION` | Instala una versión específica (ej. `v1.0.0`). Default: el release publicado más reciente, incluidos pre-releases. |
 | `SDD_INSTALL_DIR` | Carpeta destino. Default: si ya hay un `sdd-cli` en el `PATH`, lo sobrescribe en su lugar; si no, `/usr/local/bin` (o `~/.local/bin`) en Unix y `%LOCALAPPDATA%\Programs\sdd-cli` en Windows. |
 
 ```bash
 # Ejemplo: versión fija y carpeta propia
-SDD_VERSION=v0.1.0-beta SDD_INSTALL_DIR="$HOME/.local/bin" \
+SDD_VERSION=v1.0.0 SDD_INSTALL_DIR="$HOME/.local/bin" \
   curl -fsSL https://raw.githubusercontent.com/matiasezequieldimuro/sdd-framework/main/scripts/install.sh | sh
 ```
 
@@ -99,7 +99,7 @@ primera vez o para actualizar (sobrescribe el binario).
 **Linux (Ubuntu / WSL) — amd64:**
 
 ```bash
-VERSION="v0.1.0-beta"     # <-- única línea a ajustar
+VERSION="v1.0.0"          # <-- única línea a ajustar
 
 cd /tmp
 curl -fsSLO "https://github.com/matiasezequieldimuro/sdd-framework/releases/download/${VERSION}/sdd-cli_${VERSION}_linux_amd64.tar.gz"
@@ -119,7 +119,7 @@ sdd-cli version
 **macOS — Intel (amd64) o Apple Silicon (arm64):**
 
 ```bash
-VERSION="v0.1.0-beta"
+VERSION="v1.0.0"
 ARCH="arm64"              # Intel: usá "amd64"
 
 cd /tmp
@@ -141,7 +141,7 @@ sdd-cli version
 **Windows (PowerShell) — amd64:**
 
 ```powershell
-$Version = "v0.1.0-beta"
+$Version = "v1.0.0"
 $Dir = "$env:LOCALAPPDATA\Programs\sdd-cli"
 
 $zip = "$env:TEMP\sdd-cli.zip"
@@ -168,7 +168,7 @@ git clone https://github.com/matiasezequieldimuro/sdd-framework.git
 cd sdd-framework/src/cli
 
 go generate ./...    # sincroniza recursos embebidos (.sdd y adapters)
-go build -ldflags "-X sdd-cli/cmd.version=v0.1.0-dev" -o sdd-cli .
+go build -ldflags "-X sdd-cli/cmd.version=v1.0.0-dev" -o sdd-cli .
 
 sudo install -m 0755 sdd-cli /usr/local/bin/sdd-cli   # opcional: dejarlo en el PATH
 sdd-cli version
@@ -200,7 +200,7 @@ sdd-cli --help       # lista los comandos disponibles
 Salida esperada de `sdd-cli version`:
 
 ```text
-sdd-cli v0.1.0-beta (commit 91e5b13, built 2026-09-16T15:03:14Z)
+sdd-cli v1.0.0 (commit abc1234, built 2026-10-26T15:03:14Z)
 ```
 
 Para confirmar qué ejecutable se está usando y detectar copias viejas:
@@ -218,6 +218,9 @@ Get-Command sdd-cli -All   # Windows
 ## 5. Reinstalar / actualizar
 
 Actualizar es simplemente **reemplazar el binario** por uno más nuevo.
+
+> **Excepción:** pasar de un binario 0.x a 1.x requiere migrar el contrato del proyecto
+> (ver §5.1).
 
 - **Si instalaste con el método rápido (3.1):** volvé a ejecutar el mismo comando;
   sobrescribe el binario con el último release.
@@ -239,6 +242,47 @@ Actualizar es simplemente **reemplazar el binario** por uno más nuevo.
 > `type -a sdd-cli` que no haya quedado **otra copia vieja antes en el PATH**. Si la
 > hay, borrala (ver sección 6). Es la causa más común de "ejecuté la versión nueva
 > pero sigue comportándose como la vieja".
+
+### 5.1 Migrar un proyecto existente al contrato 1.0
+
+`sdd-cli` 1.x solo acepta el contrato `schema_version: "1.0"`. No hay comando de migración
+todavía, así que la migración es manual.
+
+1. **Antes de actualizar el binario** (con el binario 0.x):
+   - Verificar que `.sdd/work-items/.transactions/` no tenga transacciones en curso:
+     - Un marker `<id>.archive.json` o `<id>.cancel.json` indica un archivado o una
+       cancelación interrumpida. Ejecutar `sdd-cli status <id>` con el binario 0.x: la
+       transacción se completa o se revierte y el marker desaparece.
+     - Un `<id>.backup` cuyo work item **no** está en `active/` indica un guardado
+       interrumpido. `sdd-cli status <id>` con el binario 0.x restaura el work item.
+     - Un `<id>.backup` cuyo work item **sí** está en `active/` es un resto de un guardado
+       ya publicado. Es inofensivo: el motor lo elimina en la próxima escritura del item.
+   - Verificar que `sdd-cli validate` pase.
+   - Hacer commit o backup de `.sdd/`.
+2. Instalar el binario 1.x.
+3. Obtener el contrato nuevo: `sdd-cli init --dir <tmp-vacío>`.
+4. Reemplazar `.sdd/schemas/*.json` por los de `<tmp>/.sdd/schemas/`. El motor lee los
+   schemas del proyecto.
+5. Cambiar `schema_version: "0.1"` → `"1.0"` en:
+   - `.sdd/config.yaml`
+   - `.sdd/registry/capabilities.yaml`
+   - `.sdd/workflows/*.workflow.yaml`
+   - `.sdd/templates/*.md` (front-matter)
+
+   Si no los personalizaste, podés reemplazarlos por los de `<tmp>`. Si los personalizaste,
+   editá solo esa línea.
+6. En **todos** los work items (`.sdd/work-items/active/`, `archive/`, `cancelled/`):
+   - `manifest.yaml`: `schema_version: "1.0"` y `workflow.version: "1.0"`.
+   - `artifacts/*.md`: front-matter `schema_version: "1.0"`.
+   - **No editar `events.jsonl`**: las líneas históricas `"0.1"` siguen siendo válidas.
+7. Opcional: el front-matter de documentos propios (por ejemplo `.sdd/specs/*.md`). El
+   motor no lo valida. No editar archivos usados como `--from-artifact`, porque su hash
+   SHA-256 está registrado en el manifest y `validate` fallaría.
+8. Los archivos del adapter (`.claude/`, `CLAUDE.md`, `.mcp.json`) no llevan la versión y no
+   requieren cambios.
+9. Ejecutar `sdd-cli validate`. Las checks `*.schema_version_supported`, `*.schema_valid` y
+   `artifact.identity_valid` señalan cada archivo pendiente. `validate` no inspecciona
+   `cancelled/`: revisar esos work items a mano.
 
 ---
 

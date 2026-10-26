@@ -128,7 +128,7 @@ func TestValidationInspectorValidatesCapabilityProcedureReferences(t *testing.T)
 		t.Fatalf("Initialize() error = %v", err)
 	}
 	registryPath := filepath.Join(baseDir, ".sdd", "registry", "capabilities.yaml")
-	registry := `schema_version: "0.1"
+	registry := `schema_version: "1.0"
 capabilities:
   - id: sdd.missing-procedure
     title: Missing procedure

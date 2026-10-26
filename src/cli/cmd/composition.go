@@ -18,6 +18,8 @@ type Application struct {
 	Reject      *usecases.RejectUseCase
 	Complete    *usecases.CompleteUseCase
 	Archive     *usecases.ArchiveUseCase
+	Rework      *usecases.ReworkUseCase
+	Cancel      *usecases.CancelUseCase
 	RecordEvent *usecases.RecordEventUseCase
 }
 
@@ -46,11 +48,13 @@ func NewProductionApplication() Application {
 			artifacts,
 			clock,
 			ids,
+			workItems, // CancelledWorkItemChecker: reserves cancelled IDs (DD-6 / CA-CA-05)
 		),
 		Status: usecases.NewStatusUseCase(workItems, workflows),
-		Next:   usecases.NewNextUseCase(workItems, workflows),
+		Next:   usecases.NewNextUseCase(workItems, workflows, workItems),
 		Validate: usecases.NewValidateUseCase(
 			validator,
+			workItems, // CancelledWorkItemChecker: diagnostic for cancelled IDs (CA-CA-09)
 		),
 		Begin: usecases.NewBeginPhaseUseCase(
 			workItems,
@@ -90,6 +94,18 @@ func NewProductionApplication() Application {
 			workflows,
 			validator,
 			workItems,
+			clock,
+			ids,
+		),
+		Rework: usecases.NewReworkUseCase(
+			workItems,
+			workflows,
+			clock,
+			ids,
+		),
+		Cancel: usecases.NewCancelUseCase(
+			workItems, // WorkItemReader: reads the active work item
+			workItems, // WorkItemCanceller: performs the transactional move
 			clock,
 			ids,
 		),

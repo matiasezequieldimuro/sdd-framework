@@ -56,6 +56,8 @@ func NewRootCommand(application Application) *cobra.Command {
 		newRejectCommand(application.Reject, options),
 		newCompleteCommand(application.Complete, options),
 		newArchiveCommand(application.Archive, options),
+		newReworkCommand(application.Rework, options),
+		newCancelCommand(application.Cancel, options),
 		newRecordEventCommand(application.RecordEvent, options),
 		newVersionCommand(options),
 	)
@@ -155,13 +157,16 @@ func errorCode(err error) string {
 		return "work_item_locked"
 	case errors.Is(err, domain.ErrValidationFailed):
 		return "validation_failed"
+	case errors.Is(err, domain.ErrWorkItemCancelled):
+		return "not_found"
 	case errors.Is(err, domain.ErrInvalidTransition),
 		errors.Is(err, domain.ErrPhaseNotAwaitingApproval),
 		errors.Is(err, domain.ErrPhaseBlocked),
 		errors.Is(err, domain.ErrHumanActorRequired),
 		errors.Is(err, domain.ErrApprovalNotAllowed),
 		errors.Is(err, domain.ErrWorkItemCannotComplete),
-		errors.Is(err, domain.ErrWorkItemCannotArchive):
+		errors.Is(err, domain.ErrWorkItemCannotArchive),
+		errors.Is(err, domain.ErrWorkItemCannotCancel):
 		return "invalid_transition"
 	case errors.Is(err, domain.ErrInvalidIdentifier),
 		errors.Is(err, domain.ErrInvalidActor),

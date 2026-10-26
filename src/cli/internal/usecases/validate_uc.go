@@ -31,7 +31,8 @@ type ValidationReport struct {
 }
 
 type ValidateUseCase struct {
-	inspector ports.ValidationInspector
+	inspector        ports.ValidationInspector
+	cancelledChecker ports.CancelledWorkItemChecker
 }
 
 type ValidationFailure struct {
@@ -50,8 +51,22 @@ func (failure *ValidationFailure) Details() interface{} {
 	return failure.Report
 }
 
-func NewValidateUseCase(inspector ports.ValidationInspector) *ValidateUseCase {
-	return &ValidateUseCase{inspector: inspector}
+// NewValidateUseCase constructs a ValidateUseCase.
+//
+// @param cancelledChecker Optional checker; when provided, validate returns a
+//
+//	diagnostic error for cancelled work items instead of attempting inspection
+//	(CA-CA-09 / ESC-CA-06). Pass the FSWorkItemRepository which satisfies
+//	CancelledWorkItemChecker.
+func NewValidateUseCase(
+	inspector ports.ValidationInspector,
+	cancelledCheckers ...ports.CancelledWorkItemChecker,
+) *ValidateUseCase {
+	var checker ports.CancelledWorkItemChecker
+	if len(cancelledCheckers) > 0 {
+		checker = cancelledCheckers[0]
+	}
+	return &ValidateUseCase{inspector: inspector, cancelledChecker: checker}
 }
 
 func (uc *ValidateUseCase) Execute(baseDir, workItemID string) (*ValidationReport, error) {
@@ -68,6 +83,21 @@ func (uc *ValidateUseCase) Execute(baseDir, workItemID string) (*ValidationRepor
 	} else {
 		if err := domain.ValidateIdentifier("work item id", workItemID); err != nil {
 			return nil, err
+		}
+		// Provide a differentiated diagnostic when the ID belongs to a cancelled
+		// work item before attempting to inspect it (CA-CA-09 / ESC-CA-06).
+		if uc.cancelledChecker != nil {
+			isCancelled, checkErr := uc.cancelledChecker.WorkItemCancelledExists(baseDir, workItemID)
+			if checkErr != nil {
+				return nil, checkErr
+			}
+			if isCancelled {
+				return nil, fmt.Errorf(
+					"%w: work item '%s' was cancelled",
+					domain.ErrWorkItemCancelled,
+					workItemID,
+				)
+			}
 		}
 		scope = ValidationScopeWorkItem
 		target = workItemID

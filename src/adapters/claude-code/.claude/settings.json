@@ -12,7 +12,10 @@
       "Edit(/.sdd/context/**)",
       "Edit(/.sdd/research/**)",
       "Edit(/.sdd/specs/**)",
-      "Edit(/.sdd/work-items/active/**/artifacts/**)"
+      "Edit(/.sdd/work-items/active/**/artifacts/**)",
+      "Edit(/.sdd/work-items/active/**/evidence/**)",
+      "Bash(npx --no-install playwright-cli *)",
+      "Bash(playwright-cli *)"
     ],
     "ask": [
       "Bash(git push *)",
@@ -30,7 +33,27 @@
       "Bash(gh pr create *)",
       "Bash(az repos pr create *)",
       "mcp__github__create_pull_request",
-      "mcp__azure-devops__repo_pull_request_write"
+      "mcp__azure-devops__repo_pull_request_write",
+      "Bash(npx --no-install playwright-cli *install*)",
+      "Bash(playwright-cli *install*)",
+      "Bash(npx --no-install playwright-cli *run-code*)",
+      "Bash(playwright-cli *run-code*)",
+      "Bash(npx --no-install playwright-cli *eval*)",
+      "Bash(playwright-cli *eval*)",
+      "Bash(npx --no-install playwright-cli *attach*)",
+      "Bash(playwright-cli *attach*)",
+      "Bash(npx --no-install playwright-cli *--extension*)",
+      "Bash(playwright-cli *--extension*)",
+      "Bash(npx --no-install playwright-cli *--cdp*)",
+      "Bash(playwright-cli *--cdp*)",
+      "Bash(npx --no-install playwright-cli *--profile*)",
+      "Bash(playwright-cli *--profile*)",
+      "Bash(npx --no-install playwright-cli *state-load*)",
+      "Bash(playwright-cli *state-load*)",
+      "Bash(npx --no-install playwright-cli *state-save*)",
+      "Bash(playwright-cli *state-save*)",
+      "Bash(npx --no-install playwright-cli *--filename*)",
+      "Bash(playwright-cli *--filename*)"
     ],
     "deny": [
       "Bash(env)",
@@ -66,8 +89,12 @@
       "Edit(/.sdd/tests/**)",
       "Edit(/.sdd/workflows/**)",
       "Edit(/.sdd/work-items/archive/**)",
+      "Edit(/.sdd/work-items/cancelled/**)",
       "Edit(/.sdd/work-items/active/**/manifest.yaml)",
-      "Edit(/.sdd/work-items/active/**/events.jsonl)"
+      "Edit(/.sdd/work-items/active/**/events.jsonl)",
+      "Bash(npx playwright-cli *)",
+      "Bash(npx -y playwright-cli *)",
+      "Bash(npx --yes playwright-cli *)"
     ]
   },
   "hooks": {

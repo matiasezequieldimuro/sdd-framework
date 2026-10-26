@@ -1,4 +1,4 @@
-schema_version: "0.1"
+schema_version: "1.0"
 project:
   id: "replace-with-project-id"
   name: "Replace with project name"

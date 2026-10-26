@@ -374,7 +374,7 @@ func (repository staticConfigRepository) GetConfig(_ string) (*domain.Config, er
 		return nil, repository.err
 	}
 	return &domain.Config{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		Defaults: domain.ConfigDefaults{
 			Workflow: repository.workflowID,
 		},
@@ -459,7 +459,7 @@ func (initializer *memoryInitializer) Initialize(targetDir string) error {
 
 func memoryWorkflow() *domain.Workflow {
 	return &domain.Workflow{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		Kind:          "workflow",
 		ID:            "memory-workflow",
 		Title:         "Memory workflow",

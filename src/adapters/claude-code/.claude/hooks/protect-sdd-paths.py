@@ -36,15 +36,15 @@ def is_allowed_sdd_write(path: Path, sdd_root: Path) -> bool:
         if is_within(path, sdd_root / directory):
             return True
 
-    # Active work items may only be changed through their artifacts directory.
+    # Active work items may only be changed through their artifacts and evidence directories.
     active_root = sdd_root / "work-items" / "active"
     if not is_within(path, active_root):
         return False
 
     # Inspect the path below the active work-items directory.
     relative = path.relative_to(active_root)
-    # Require a work-item name followed by the artifacts directory.
-    return len(relative.parts) >= 3 and relative.parts[1] == "artifacts"
+    # Require a work-item name followed by the artifacts or evidence directory.
+    return len(relative.parts) >= 3 and relative.parts[1] in ("artifacts", "evidence")
 
 
 def main() -> int:

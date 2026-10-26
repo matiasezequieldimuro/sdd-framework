@@ -12,7 +12,8 @@
       "Edit(/.sdd/context/**)",
       "Edit(/.sdd/research/**)",
       "Edit(/.sdd/specs/**)",
-      "Edit(/.sdd/work-items/active/**/artifacts/**)"
+      "Edit(/.sdd/work-items/active/**/artifacts/**)",
+      "Edit(/.sdd/work-items/active/**/evidence/**)"
     ],
     "ask": [
       "Bash(git push *)",
@@ -65,6 +66,7 @@
       "Edit(/.sdd/tests/**)",
       "Edit(/.sdd/workflows/**)",
       "Edit(/.sdd/work-items/archive/**)",
+      "Edit(/.sdd/work-items/cancelled/**)",
       "Edit(/.sdd/work-items/active/**/manifest.yaml)",
       "Edit(/.sdd/work-items/active/**/events.jsonl)"
     ]

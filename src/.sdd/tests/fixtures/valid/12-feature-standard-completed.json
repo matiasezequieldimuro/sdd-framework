@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "1.0",
   "kind": "work-item",
   "id": "feat-001-coupons",
   "revision": 12,
@@ -13,7 +13,7 @@
   },
   "workflow": {
     "id": "feature-standard",
-    "version": "0.1",
+    "version": "1.0",
     "entry_phase": "prd"
   },
   "input": {

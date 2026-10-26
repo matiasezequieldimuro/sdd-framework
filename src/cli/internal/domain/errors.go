@@ -28,6 +28,8 @@ var (
 	ErrWorkItemCannotArchive    = errors.New("work item cannot be archived")
 	ErrWorkItemAlreadyArchived  = errors.New("work item is already archived")
 	ErrArchiveConflict          = errors.New("archive storage conflict")
+	ErrWorkItemCannotCancel     = errors.New("work item cannot be cancelled")
+	ErrWorkItemCancelled        = errors.New("work item was cancelled")
 	ErrAdapterNotFound          = errors.New("adapter not found")
 	ErrAdapterInstallConflict   = errors.New("adapter installation conflict")
 )

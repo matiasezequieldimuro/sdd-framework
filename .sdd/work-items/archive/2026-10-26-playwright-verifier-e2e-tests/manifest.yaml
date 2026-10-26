@@ -1,0 +1,65 @@
+schema_version: "1.0"
+kind: work-item
+id: playwright-verifier-e2e-tests
+revision: 42
+title: Integrar Playwright CLI + skills para verificación de UI
+type: fast-change
+status: archived
+created_at: "2026-10-22T13:36:40Z"
+created_by:
+    kind: agent
+    id: sdd-orchestrator
+workflow:
+    id: fast-change
+    version: "1.0"
+    entry_phase: plan
+input:
+    source: user_prompt
+    summary: 'Crear una capability y una skill thin, agnóstica al agente, que explique cómo usar playwright-cli y referencie las skills que trae el paquete (@playwright/cli), para automatizar tests/smoke de UI en la fase de verificación. Referencia: playwright-cli-para-sdd.md (investigación exploratoria).'
+phases:
+    archive:
+        status: completed
+        artifact: artifacts/archive.md
+    human-code-review:
+        status: approved
+        artifact: artifacts/human-code-review.md
+    implementation:
+        status: completed
+        artifact: artifacts/implementation-report.md
+    plan:
+        status: approved
+        artifact: artifacts/plan.md
+    verification:
+        status: completed
+        artifact: artifacts/verification-report.md
+approvals:
+    - phase: plan
+      status: rejected
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-22T14:35:34Z"
+      comment: 'D1,D2,D5,D7 aprobadas. D3: allow para todo lo que no escriba source code, no lea credenciales ni impacte el repo remoto; ask solo para ejecución de código arbitrario (run-code, eval) y conexión a navegador/sesiones reales (attach, --cdp, --extension, --profile); no ''allow all''; verificar que cada regla de seguridad del procedure esté reflejada en settings.json. D4: la evidencia de playwright-cli se mueve/copia por defecto a evidence/ del work item. D6: smoke real autorizado en directorio temporal fuera del repo. Sin .agents (solo .claude, sin --skills=agents). Mover playwright-cli-para-sdd.md a .sdd/research/ y trackearlo. Corregir AGENTS.md línea 17 (sí se crean work items en este repo: dogfooding). Incluir paso de sync src/ -> .claude/ y .sdd/ de la raíz (sin comando upgrade), ejecutado por el usuario por permisos.'
+    - phase: plan
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-22T14:54:44Z"
+      comment: Plan revisión 2 aprobado
+    - phase: plan
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-22T18:25:13Z"
+      comment: 'Revisión 3 aprobada: opción B, residuales, 4 reglas ask, DoD cerrada de verificación'
+    - phase: human-code-review
+      status: approved
+      by:
+        kind: human
+        id: matias
+      at: "2026-10-22T19:33:19Z"
+      comment: 'Aprobado; gaps G-R6-2, G-R6-3, G-R6-4 aceptados; G-1 y G-4 a work item futuro. Pasar a archive: commit y push, sin PR.'
+traceability:
+    events: events.jsonl

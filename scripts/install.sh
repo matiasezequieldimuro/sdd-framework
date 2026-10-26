@@ -5,7 +5,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/matiasezequieldimuro/sdd-framework/main/scripts/install.sh | sh
 #
 # Environment overrides:
-#   SDD_VERSION      Install a specific tag (e.g. v0.1.0-beta). Default: latest release.
+#   SDD_VERSION      Install a specific tag (e.g. v1.0.0). Default: latest release.
 #   SDD_INSTALL_DIR  Target directory for the binary. Default: /usr/local/bin (or ~/.local/bin
 #                    when /usr/local/bin is not writable).
 set -eu
@@ -38,7 +38,7 @@ esac
 
 # We publish linux/amd64, darwin/amd64 and darwin/arm64.
 if [ "$os" = "linux" ] && [ "$arch" != "amd64" ]; then
-  err "no published build for linux/$arch. Build from source: see docs/10-guia-instalacion.md"
+  err "no published build for linux/$arch. Build from source: see docs/GUIA_INSTALACION.md"
 fi
 
 # --- Resolve version -------------------------------------------------------

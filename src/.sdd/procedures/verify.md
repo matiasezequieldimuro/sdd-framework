@@ -45,8 +45,8 @@ Seleccionar las comprobaciones aplicables al cambio y declarar explícitamente l
 2. **Pruebas automatizadas:** ejecutar primero las pruebas unitarias y luego las de integración o contrato relacionadas con el alcance. Ejecutar la suite de regresión disponible cuando el riesgo o el plan lo requieran.
 3. **Smoke test:** levantar el sistema en un entorno reproducible y comprobar el camino mínimo de funcionamiento, incluyendo arranque, configuración esencial y una operación representativa.
 4. **API testing:** cuando se modifique o consuma una API, probar los endpoints o contratos afectados con entradas válidas, respuestas esperadas y, cuando sea relevante, errores, autenticación, validación y límites. Conservar requests, responses o reportes sanitizados bajo `evidence/`.
-5. **Verificación visual:** cuando exista UI, levantarla en el entorno indicado por el proyecto y comprobar que la pantalla modificada luce como lo esperado según la especificación. Registrar viewport, navegador, estado utilizado y capturas antes/después cuando aporten valor.
-6. **Flujo UI/RPA:** cuando exista interacción de usuario, ejecutar el flujo principal mediante clicks, escritura, selección, navegación y acciones equivalentes a un usuario real. Comprobar estados intermedios, mensajes, navegación, persistencia y resultado final; conservar screenshots, video o logs reproducibles cuando estén disponibles.
+5. **Verificación visual:** cuando exista UI, levantarla en el entorno indicado por el proyecto y comprobar que la pantalla modificada luce como lo esperado según la especificación. Registrar viewport, navegador, estado utilizado y capturas antes/después cuando aporten valor. Para automatizarla, seguir la capability `sdd.verify-ui` (`procedures/verify-ui.md`).
+6. **Flujo UI/RPA:** cuando exista interacción de usuario, ejecutar el flujo principal mediante clicks, escritura, selección, navegación y acciones equivalentes a un usuario real. Comprobar estados intermedios, mensajes, navegación, persistencia y resultado final; conservar screenshots, video o logs reproducibles cuando estén disponibles. Para automatizarlo, seguir la capability `sdd.verify-ui` (`procedures/verify-ui.md`).
 
 No inventar pruebas visuales o de API para componentes que no las tienen. Declarar `No aplica` junto con la razón y la cobertura alternativa.
 
@@ -55,6 +55,7 @@ No inventar pruebas visuales o de API para componentes que no las tienen. Declar
 - Registrar para cada comprobación el comando o procedimiento exacto, entorno, fecha, resultado y causa de cualquier fallo.
 - No ocultar fallos por ejecutar comandos parciales ni reemplazar una prueba fallida por una inspección manual sin explicarlo.
 - Sanitizar secretos, tokens, datos personales y credenciales antes de guardar evidencia.
+- La evidencia de UI se guarda bajo `evidence/ui/` y se cita en la matriz de trazabilidad y en las secciones de UI del reporte.
 - Guardar bajo `evidence/` los resultados crudos que permitan reproducir o auditar la conclusión: logs, JSON/JUnit, capturas, videos, reportes de cobertura y resultados de smoke tests.
 - Si el entorno no puede levantarse o una prueba no puede ejecutarse, marcarla como `Bloqueada`, explicar el bloqueo y no afirmar que el criterio está validado.
 
