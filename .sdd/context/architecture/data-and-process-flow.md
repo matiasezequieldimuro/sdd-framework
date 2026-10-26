@@ -61,7 +61,7 @@ flowchart LR
 - Pasos principales: setup + exploración del repositorio para generar la documentación de
   contexto en `.sdd/context/` (`project.md` y `architecture/{software-architecture,
   project-architecture, data-modeling, data-and-process-flow}.md`) y, en proyectos
-  avanzados, specs reconstruidas por funcionalidad en `.sdd/context/specs/`. El
+  avanzados, specs reconstruidas por funcionalidad en `.sdd/specs/`. El
   procedure indica **no** completar `domain-language.md` (se construye progresivamente).
 - Salidas: contexto estable del proyecto (este mismo conjunto de documentos).
 - Errores y reintentos: no aplica a nivel motor (lo ejecuta un agente/procedure).

@@ -108,7 +108,7 @@ Las aprobaciones se validan con `approval.*`: `phase_unknown`, `policy_invalid`,
   **warning** si el archivo no está en esta máquina), `reference.external_regular`,
   `reference.related_work_item_id_valid`, `reference.baseline_spec_exists` (cada
   `traceability.baseline_specs` es relativo a `.sdd/` y debe empezar con `specs/`, es decir
-  vivir en `.sdd/specs/`; las specs reconstruidas en `.sdd/context/specs/` no califican).
+  vivir en `.sdd/specs/`, donde también se guardan las specs reconstruidas por el onboarding).
 - Artefactos (`category: artifact`): `artifact.required_exists`,
   `artifact.front_matter_present`, `artifact.front_matter_schema_valid`,
   `artifact.identity_valid`, `artifact.source_declared`, `artifact.source_available`.

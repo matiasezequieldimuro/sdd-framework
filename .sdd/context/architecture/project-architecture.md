@@ -28,9 +28,9 @@ sdd-framework/
 │   ├── templates/*.md
 │   ├── procedures/*.md
 │   ├── registry/capabilities.yaml
-│   ├── context/                 # Docs de contexto (este conjunto) + context/specs/
+│   ├── context/                 # Docs de contexto (este conjunto)
 │   ├── research/                # Investigaciones fechadas (evidencia exploratoria)
-│   ├── specs/                   # Specs vigentes/baseline (hoy solo .gitkeep)
+│   ├── specs/                   # Specs vigentes/baseline (reconstruidas por funcionalidad)
 │   └── work-items/{active,archive}/ (+ cancelled/ lazy, .locks/, .transactions/)
 └── src/
     ├── .sdd/                    # Fuente canónica del contrato (template; incluye tests/fixtures)

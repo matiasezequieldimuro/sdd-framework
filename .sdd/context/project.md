@@ -44,8 +44,8 @@ proceso auditable y portable.
     qué modelo usar. Eso lo hacen los agentes/personas.
 - Uso del propio framework (dogfooding): los cambios al motor se hacen en `src/`, pero se
   gobiernan como work items SDD de este mismo repo. La `.sdd/` de la raíz es una copia
-  instalada de `src/.sdd/` más el conocimiento propio del repo (`context/`, incluidas
-  `context/specs/`, y `research/`) y sus `work-items/` (hay expedientes archivados en
+  instalada de `src/.sdd/` más el conocimiento propio del repo (`context/`, `specs/` y
+  `research/`) y sus `work-items/` (hay expedientes archivados en
   `.sdd/work-items/archive/`). Ver `AGENTS.md`.
 - Límites conocidos (fuera de alcance en la v1.0.0):
   - Observabilidad de tokens y costos, memoria (Engram) y navegación de código (CodeGraph).
@@ -54,7 +54,7 @@ proceso auditable y portable.
     `docs/GUIA_INSTALACION.md` §5.1).
   - El retrabajo (`sdd-cli rework`) y la cancelación (`sdd-cli cancel`), listados como
     fuera de alcance en `0.1.0-beta`, ya están implementados (ver `CHANGELOG.md`
-    `[Unreleased]` y `.sdd/context/specs/rework-y-cancelacion.md`).
+    `[Unreleased]` y `.sdd/specs/rework-y-cancelacion.md`).
 
 ## Componentes principales
 
@@ -114,7 +114,7 @@ proceso auditable y portable.
 - `CHANGELOG.md` — historial de versiones, alcance de cada release y lo que queda fuera de alcance.
 - `AGENTS.md` — rol/objetivo del asistente en el diseño del framework.
 - Contexto de arquitectura: `.sdd/context/architecture/` (este mismo conjunto de docs).
-- Specs reconstruidas/consolidadas de las capacidades del motor: `.sdd/context/specs/`.
+- Specs reconstruidas/consolidadas de las capacidades del motor: `.sdd/specs/`.
 
 ## Estado y pendientes
 

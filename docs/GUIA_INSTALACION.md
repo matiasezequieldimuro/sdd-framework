@@ -275,7 +275,7 @@ todavía, así que la migración es manual.
    - `manifest.yaml`: `schema_version: "1.0"` y `workflow.version: "1.0"`.
    - `artifacts/*.md`: front-matter `schema_version: "1.0"`.
    - **No editar `events.jsonl`**: las líneas históricas `"0.1"` siguen siendo válidas.
-7. Opcional: el front-matter de documentos propios (por ejemplo `.sdd/context/specs/*.md`). El
+7. Opcional: el front-matter de documentos propios (por ejemplo `.sdd/specs/*.md`). El
    motor no lo valida. No editar archivos usados como `--from-artifact`, porque su hash
    SHA-256 está registrado en el manifest y `validate` fallaría.
 8. Los archivos del adapter (`.claude/`, `CLAUDE.md`, `.mcp.json`) no llevan la versión y no

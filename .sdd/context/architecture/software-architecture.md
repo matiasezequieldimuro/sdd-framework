@@ -77,8 +77,9 @@ local. La única noción de "autorización" es de **proceso**, no de identidad d
   privado real queda ignorado por Git. Los hooks (`protect-sdd-paths.py`,
   `protect-secrets.py`) y los permisos `allow`/`ask`/`deny` de `.claude/settings.json`
   (p. ej. `ask` para `git push`/`commit`/PRs y para subcomandos sensibles de
-  `playwright-cli`; `deny` para manifests, eventos y archivados) actúan como salvaguardas
-  del lado del agente.
+  `playwright-cli`; `deny` para manifests, eventos, archivados y cancelados) actúan como
+  salvaguardas del lado del agente. Dentro de un work item activo, los agentes solo pueden
+  escribir en `artifacts/` y `evidence/`.
 
 ## Integraciones y comunicación
 

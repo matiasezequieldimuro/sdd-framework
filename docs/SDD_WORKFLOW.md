@@ -296,7 +296,7 @@ Estos documentos usan el codebase como fuente de verdad prioritaria y describen 
 proyecto, la arquitectura, el modelo de datos y los flujos. `domain-language.md` no se
 completa en el onboarding: se construye progresivamente durante el trabajo. En proyectos
 con funcionalidad ya implementada, el onboarding también reconstruye una spec por
-funcionalidad en `.sdd/context/specs/`.
+funcionalidad en `.sdd/specs/`.
 
 ### 9.3. Consulta técnica o funcional
 
