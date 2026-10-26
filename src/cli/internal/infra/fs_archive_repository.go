@@ -347,7 +347,7 @@ func (r *FSWorkItemRepository) ArchiveWorkItem(
 	}
 
 	marker := archiveTransaction{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		WorkItem:      commit.Item.ID,
 		OperationID:   commit.OperationID,
 		Destination:   destinationName,
@@ -522,7 +522,13 @@ func (r *FSWorkItemRepository) recoverArchiveTransactionLocked(baseDir, id strin
 	if err := json.Unmarshal(markerData, &marker); err != nil {
 		return fmt.Errorf("%w: invalid archive transaction marker: %v", domain.ErrArchiveConflict, err)
 	}
-	if marker.SchemaVersion != "0.1" || marker.WorkItem != id {
+	if marker.SchemaVersion != domain.ContractSchemaVersion {
+		return fmt.Errorf(
+			"%w: archive transaction marker schema_version %q is not supported (requires %q); recover it with the sdd-cli version that created it",
+			domain.ErrArchiveConflict, marker.SchemaVersion, domain.ContractSchemaVersion,
+		)
+	}
+	if marker.WorkItem != id {
 		return fmt.Errorf("%w: archive transaction marker does not match %s", domain.ErrArchiveConflict, id)
 	}
 	parsedID, err := parseArchiveDirectoryName(marker.Destination)

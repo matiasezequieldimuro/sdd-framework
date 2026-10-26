@@ -148,7 +148,7 @@ func TestGetWorkItemRecoversInterruptedArchiveBeforePublish(t *testing.T) {
 		t.Fatalf("Rename() backup error = %v", err)
 	}
 	markerData, err := json.Marshal(archiveTransaction{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		WorkItem:      item.ID,
 		OperationID:   "interrupted-archive",
 		Destination:   "2026-08-20-" + item.ID,
@@ -243,4 +243,24 @@ func archiveEvent(
 	)
 	event.CorrelationID = operationID
 	return event
+}
+
+// T8: a legacy archive marker is rejected with an explicit version message.
+func TestGetWorkItemRejectsLegacyArchiveMarker(t *testing.T) {
+	baseDir := persistenceTestBaseDir(t)
+	repository := NewFSWorkItemRepository()
+	item := persistedArchiveCandidate(t, baseDir, repository)
+	transactionRoot := filepath.Join(baseDir, ".sdd", "work-items", ".transactions")
+	if err := os.MkdirAll(transactionRoot, 0755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	marker := `{"schema_version":"0.1","work_item":"` + item.ID + `","operation_id":"legacy","destination":"2026-08-20-` + item.ID + `"}`
+	if err := os.WriteFile(filepath.Join(transactionRoot, item.ID+".archive.json"), []byte(marker), 0644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	_, err := repository.GetWorkItem(baseDir, item.ID)
+	if !errors.Is(err, domain.ErrArchiveConflict) || !strings.Contains(err.Error(), `schema_version "0.1" is not supported`) {
+		t.Fatalf("GetWorkItem() error = %v, want legacy marker conflict", err)
+	}
 }

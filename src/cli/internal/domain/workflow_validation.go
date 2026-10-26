@@ -53,8 +53,9 @@ func (workflow *Workflow) SemanticViolations() []ContractViolation {
 			violations = append(violations, NewContractViolation(
 				"workflow.phase_artifact_count_invalid",
 				ErrInvalidWorkflow,
-				"phase %s must produce exactly one artifact in contract v0.1",
+				"phase %s must produce exactly one artifact in contract v%s",
 				phase.ID,
+				ContractSchemaVersion,
 			))
 		}
 	}

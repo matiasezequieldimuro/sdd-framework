@@ -318,7 +318,7 @@ func (r *FSWorkItemRepository) CancelWorkItem(
 
 	// Phase 2: write the transaction marker (crash-safe sentinel).
 	marker := cancelTransaction{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		WorkItem:      commit.Item.ID,
 		OperationID:   commit.OperationID,
 		Destination:   destinationName,
@@ -464,7 +464,13 @@ func (r *FSWorkItemRepository) recoverCancelTransactionLocked(baseDir, id string
 	if err := json.Unmarshal(markerData, &marker); err != nil {
 		return fmt.Errorf("%w: invalid cancel transaction marker: %v", domain.ErrArchiveConflict, err)
 	}
-	if marker.SchemaVersion != "0.1" || marker.WorkItem != id || marker.Destination != id {
+	if marker.SchemaVersion != domain.ContractSchemaVersion {
+		return fmt.Errorf(
+			"%w: cancel transaction marker schema_version %q is not supported (requires %q); recover it with the sdd-cli version that created it",
+			domain.ErrArchiveConflict, marker.SchemaVersion, domain.ContractSchemaVersion,
+		)
+	}
+	if marker.WorkItem != id || marker.Destination != id {
 		return fmt.Errorf("%w: cancel transaction marker does not match %s", domain.ErrArchiveConflict, id)
 	}
 

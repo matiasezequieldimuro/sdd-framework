@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "1.0",
   "kind": "work-item",
   "id": "fast-001-fix-typo",
   "revision": 4,
@@ -13,7 +13,7 @@
   },
   "workflow": {
     "id": "fast-change",
-    "version": "0.1",
+    "version": "1.0",
     "entry_phase": "plan"
   },
   "input": {

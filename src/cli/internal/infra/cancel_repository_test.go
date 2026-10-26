@@ -240,7 +240,7 @@ func cancelCommit(item *domain.WorkItem, operationID string) ports.WorkItemCance
 func writeCancelMarker(t *testing.T, paths cancelPaths, id, operationID string) {
 	t.Helper()
 	data, err := json.Marshal(cancelTransaction{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		WorkItem:      id,
 		OperationID:   operationID,
 		Destination:   id,
@@ -283,5 +283,25 @@ func assertCancelTransactionClean(t *testing.T, paths cancelPaths) {
 		if _, err := os.Stat(path); !os.IsNotExist(err) {
 			t.Fatalf("transaction path still exists %s: %v", path, err)
 		}
+	}
+}
+
+// T8: a legacy cancel marker is rejected with an explicit version message.
+func TestGetWorkItemRejectsLegacyCancelMarker(t *testing.T) {
+	baseDir := persistenceTestBaseDir(t)
+	repository := NewFSWorkItemRepository()
+	item := persistedCancelCandidate(t, baseDir, repository)
+	paths := cancelTestPaths(baseDir, item.ID)
+	if err := os.MkdirAll(filepath.Dir(paths.marker), 0755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	marker := `{"schema_version":"0.1","work_item":"` + item.ID + `","operation_id":"legacy","destination":"` + item.ID + `"}`
+	if err := os.WriteFile(paths.marker, []byte(marker), 0644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	_, err := repository.GetWorkItem(baseDir, item.ID)
+	if !errors.Is(err, domain.ErrArchiveConflict) || !strings.Contains(err.Error(), `schema_version "0.1" is not supported`) {
+		t.Fatalf("GetWorkItem() error = %v, want legacy marker conflict", err)
 	}
 }

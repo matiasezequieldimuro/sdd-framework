@@ -151,7 +151,7 @@ func TestArchiveUseCaseReturnsIdempotentArchivedResult(t *testing.T) {
 
 func archiveUseCaseState(archiveStatus domain.PhaseStatus) (*domain.Workflow, *domain.WorkItem) {
 	workflow := &domain.Workflow{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		ID:            "archive-workflow",
 		WorkItemType:  "test",
 		Phases: []domain.WorkflowPhase{

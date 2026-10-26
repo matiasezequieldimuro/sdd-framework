@@ -212,12 +212,16 @@ func stripFrontMatter(content string) string {
 
 func validateArtifactMetadata(data []byte, artifactID, phaseID, workItemID string) error {
 	var metadata struct {
-		ID       string `yaml:"id"`
-		Phase    string `yaml:"phase"`
-		WorkItem string `yaml:"work_item"`
+		SchemaVersion string `yaml:"schema_version"`
+		ID            string `yaml:"id"`
+		Phase         string `yaml:"phase"`
+		WorkItem      string `yaml:"work_item"`
 	}
 	if err := yaml.Unmarshal(data, &metadata); err != nil {
 		return fmt.Errorf("%w: parse artifact metadata: %v", domain.ErrSchemaValidation, err)
+	}
+	if err := domain.ValidateContractSchemaVersion("artifact "+artifactID+" metadata", metadata.SchemaVersion); err != nil {
+		return err
 	}
 	if metadata.ID != artifactID || metadata.Phase != phaseID || metadata.WorkItem != workItemID {
 		return fmt.Errorf(

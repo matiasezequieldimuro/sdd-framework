@@ -11,7 +11,7 @@ import (
 // suitable for rework propagation tests.
 func reworkWorkflow() *domain.Workflow {
 	return &domain.Workflow{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		Kind:          "workflow",
 		ID:            "rework-test",
 		Title:         "Rework Test",

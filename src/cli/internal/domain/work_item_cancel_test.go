@@ -95,7 +95,7 @@ func TestCancelPreservesAllPhaseStates(t *testing.T) {
 func TestValidateAgainstSupersededPhaseIsExempted(t *testing.T) {
 	// Minimal two-phase linear workflow: plan → implementation.
 	workflow := &domain.Workflow{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		Kind:          "workflow",
 		ID:            "dd5-regression",
 		Title:         "DD-5 Regression",
@@ -120,14 +120,14 @@ func TestValidateAgainstSupersededPhaseIsExempted(t *testing.T) {
 	}
 	// Post-rework state: plan reset to ready, implementation superseded.
 	item := &domain.WorkItem{
-		SchemaVersion: "0.1",
+		SchemaVersion: domain.ContractSchemaVersion,
 		Kind:          "work-item",
 		ID:            "dd5-test-item",
 		Type:          "dd5-regression", // must match workflow.WorkItemType
 		Status:        domain.WorkItemActive,
 		Workflow: domain.WorkItemWorkflow{
 			ID:         "dd5-regression",
-			Version:    "0.1",
+			Version:    domain.ContractSchemaVersion,
 			EntryPhase: "plan",
 		},
 		Input: domain.WorkItemInput{Source: "user_prompt"},

@@ -22,7 +22,7 @@ func TestStartUsesConfiguredDefaultWorkflowAndAllowsOverride(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, ".sdd", "config.yaml")
-	config := `schema_version: "0.1"
+	config := `schema_version: "1.0"
 defaults:
   workflow: fast-change
 `
@@ -93,7 +93,7 @@ func TestStartUsesLocalTemplate(t *testing.T) {
 		t.Fatal("generated artifact did not use the local template")
 	}
 	for _, field := range []string{
-		`schema_version: "0.1"`,
+		`schema_version: "` + domain.ContractSchemaVersion + `"`,
 		`work_item: "feature-local-template"`,
 		`created_by: { kind: "cli", id: "sdd" }`,
 		"sources: []",
