@@ -38,7 +38,7 @@ esac
 
 # We publish linux/amd64, darwin/amd64 and darwin/arm64.
 if [ "$os" = "linux" ] && [ "$arch" != "amd64" ]; then
-  err "no published build for linux/$arch. Build from source: see docs/10-guia-instalacion.md"
+  err "no published build for linux/$arch. Build from source: see docs/GUIA_INSTALACION.md"
 fi
 
 # --- Resolve version -------------------------------------------------------

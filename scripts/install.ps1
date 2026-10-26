@@ -25,7 +25,7 @@ function Write-Info($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 # --- Detect architecture ---------------------------------------------------
 $arch = 'amd64'
 if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') {
-    throw "windows/arm64 is not published. Build from source: see docs/10-guia-instalacion.md"
+    throw "windows/arm64 is not published. Build from source: see docs/GUIA_INSTALACION.md"
 }
 
 # --- Resolve version -------------------------------------------------------
