@@ -78,7 +78,7 @@ Opciones (variables de entorno):
 
 | Variable | Efecto |
 | --- | --- |
-| `SDD_VERSION` | Instala una versión específica (ej. `v1.0.0`). Default: último release. |
+| `SDD_VERSION` | Instala una versión específica (ej. `v1.0.0`). Default: el release publicado más reciente, incluidos pre-releases. |
 | `SDD_INSTALL_DIR` | Carpeta destino. Default: si ya hay un `sdd-cli` en el `PATH`, lo sobrescribe en su lugar; si no, `/usr/local/bin` (o `~/.local/bin`) en Unix y `%LOCALAPPDATA%\Programs\sdd-cli` en Windows. |
 
 ```bash
@@ -281,7 +281,8 @@ todavía, así que la migración es manual.
 8. Los archivos del adapter (`.claude/`, `CLAUDE.md`, `.mcp.json`) no llevan la versión y no
    requieren cambios.
 9. Ejecutar `sdd-cli validate`. Las checks `*.schema_version_supported`, `*.schema_valid` y
-   `artifact.identity_valid` señalan cada archivo pendiente.
+   `artifact.identity_valid` señalan cada archivo pendiente. `validate` no inspecciona
+   `cancelled/`: revisar esos work items a mano.
 
 ---
 

@@ -9,7 +9,8 @@ Participan tres actores/sistemas alrededor del motor:
 - **Persona (humano)**: aprueba o rechaza fases con gate; es el único que puede pasar los
   gates humanos.
 - **Agente de IA**: realiza el trabajo cognitivo (redacta, investiga, programa) y le
-  informa a la CLI qué hizo (`begin`, `deliver`, `record-event`).
+  informa a la CLI qué hizo (`begin`, `deliver`, `record-event`; también `rework` y
+  `cancel`, que aceptan cualquier tipo de actor y exigen `--reason`).
 - **`sdd-cli` (motor)**: gobierna el proceso; valida transiciones, exige gates, prepara
   artefactos y persiste estado + eventos en `.sdd/` de forma atómica.
 
@@ -44,7 +45,8 @@ flowchart LR
   1. Verifica que `.sdd/` no exista (no sobrescribe instalaciones previas).
   2. Desempaqueta el contrato embebido en un directorio de staging, excluyendo
      `work-items/` y `tests/` (fixtures).
-  3. Crea `work-items/active/` y `work-items/archive/` con `.gitkeep`.
+  3. Crea `work-items/active/` y `work-items/archive/` con `.gitkeep`, y
+     `work-items/.gitignore` (excluye `.locks/` y `.transactions/`).
   4. Publica el staging con un `rename` atómico a `.sdd/`.
   5. `adapters install claude-code`: exige `.sdd/` previo, comprueba todas las colisiones
      antes de escribir (falla sin sobrescribir; no hay `--force`) y publica `CLAUDE.md`,
@@ -57,8 +59,10 @@ flowchart LR
 - Disparador: proyecto existente que quiere adoptar SDD (capability `sdd.onboard-project`).
 - Entradas: fuentes del repo (docs + codebase).
 - Pasos principales: setup + exploración del repositorio para generar la documentación de
-  contexto en `.sdd/context/` (`software-architecture.md`, `project-architecture.md`,
-  `data-modeling.md`, `data-and-process-flow.md`, `domain-language.md`).
+  contexto en `.sdd/context/` (`project.md` y `architecture/{software-architecture,
+  project-architecture, data-modeling, data-and-process-flow}.md`) y, en proyectos
+  avanzados, specs reconstruidas por funcionalidad en `.sdd/context/specs/`. El
+  procedure indica **no** completar `domain-language.md` (se construye progresivamente).
 - Salidas: contexto estable del proyecto (este mismo conjunto de documentos).
 - Errores y reintentos: no aplica a nivel motor (lo ejecuta un agente/procedure).
 
@@ -76,7 +80,8 @@ flowchart LR
      `--request-approval`); `none` → `completed`.
   3. `approve`/`reject` (solo humano) resuelven una fase `awaiting_approval`. Aprobar
      desbloquea las fases cuyas dependencias quedan satisfechas y prepara sus templates en
-     el mismo commit. Rechazar reabre con `begin` (retrabajo) sin borrar el historial.
+     el mismo commit. Rechazar reabre con `begin` (`rejected → in_progress`) sin borrar el
+     historial.
   4. `complete --phase` normaliza `approved`/`accepted` → `completed` (opcional; ambos ya
      satisfacen dependencias).
   5. `complete` (sin `--phase`) cierra el work item a `completed` cuando todas las fases
@@ -90,6 +95,33 @@ flowchart LR
   `concurrent_modification`; lock tomado → `work_item_locked`. `--operation-id` hace el
   comando idempotente (reintentar no duplica eventos ni reaplica la transición).
 
+### Proceso: Retrabajo (`sdd-cli rework`)
+
+- Disparador: `sdd-cli rework <id> --phase <fase> --reason <motivo>` cuando una fase ya
+  resuelta debe rehacerse (p. ej. el plan aprobado resultó incorrecto).
+- Entradas: fase en `completed`/`approved`/`accepted`; item `active` o `completed`.
+- Pasos principales: si el item estaba `completed` lo reactiva a `active`; la fase objetivo
+  pasa a `ready`; cada descendiente transitivo (orden topológico) pasa a `superseded` si ya
+  tenía trabajo (`completed`, `approved`, `accepted`, `in_progress`, `awaiting_approval`,
+  `rejected`) o vuelve a `blocked` si estaba `ready`. No toca artefactos ni `approvals`.
+  Las fases `superseded` se reinician con `begin` cuando sus dependencias vuelven a estar
+  satisfechas, y `next` las reporta.
+- Salidas: eventos `work_item.reactivated` (si aplica) y `phase.transitioned` con cause
+  `rework_requested` / `rework_superseded`, todos con `data.reason`.
+- Errores: fase en otro estado → `invalid_transition`; fase inexistente → `not_found`.
+
+### Proceso: Cancelación (`sdd-cli cancel`)
+
+- Disparador: `sdd-cli cancel <id> --reason <motivo>` para abandonar un work item.
+- Entradas: item `active` (un item `completed` no se cancela → `invalid_transition`).
+- Pasos principales: pasa el item a `cancelled` sin modificar las fases y mueve el
+  expediente completo, de forma transaccional (stage → marker → backup → rename), a
+  `.sdd/work-items/cancelled/<id>/`.
+- Salidas: evento `work_item.cancelled`; el ID queda reservado (`start` posterior →
+  `already_exists`) y el expediente es opaco para `status`/`next`/`validate` (`not_found`).
+- Errores y reintentos: irreversible (no hay reactivación); idempotente con
+  `--operation-id`; recovery automático ante crash.
+
 ### Proceso: Inicio desde artefacto externo (`--from-artifact`)
 
 - Disparador: `sdd-cli start <id> --from-artifact <ruta> --phase <fase>`.
@@ -99,8 +131,9 @@ flowchart LR
   ancestro como `not_applicable`; deja la fase de entrada en `accepted` o
   `awaiting_approval` según su gate. Registra evento `phase.bypassed_by_external_input`.
 - Salidas: work item que arranca "más adelante", sin saltear fases arbitrariamente.
-- Errores: `invalid_external_artifact` si el artefacto no corresponde al entry point o no
-  existe; mismatch de hash/artefacto detectado por la validación del manifest.
+- Errores: `invalid_input` (`ErrInvalidExternalArtifact` / `ErrInvalidEntryPoint`) si el
+  artefacto no existe, falta `--phase` o la fase no es un entry point que acepte un
+  artefacto; mismatch de hash/artefacto detectado por la validación del manifest.
 
 ### Proceso: Validación del contrato y del DAG (`sdd-cli validate`)
 
@@ -152,7 +185,14 @@ stateDiagram-v2
     approved --> completed: complete
     blocked --> not_applicable: entry externo (fases ancestro)
     ready --> accepted: entry externo (fase de entrada sin gate)
+    completed --> ready: rework (fase objetivo)
+    completed --> superseded: rework (descendiente)
+    superseded --> in_progress: begin (dependencias satisfechas)
 ```
+
+Notas: `rework` también parte de `approved`/`accepted` (fase objetivo) y lleva a
+`superseded` descendientes en `approved`, `accepted`, `in_progress`, `awaiting_approval` o
+`rejected`; un descendiente `ready` vuelve a `blocked`.
 
 ## Eventos y comunicación
 
@@ -160,8 +200,12 @@ stateDiagram-v2
 
 - No hay colas ni webhooks; toda la comunicación es **síncrona vía CLI**.
 - Cada operación mutadora agrega uno o más **eventos** append-only a `events.jsonl`
-  (`work_item.created`, `work_item_started`, transiciones de fase,
-  `phase.bypassed_by_external_input`, y eventos custom vía `record-event`). Cada evento
+  (`work_item.created`, `phase.bypassed_by_external_input`, `phase.transitioned` con un
+  `cause` por operación —`work_item_started`, `phase_begun`, `phase_delivered`,
+  `approval_recorded`, `approval_rejected`, `phase_completed`, `dependencies_satisfied`,
+  `rework_requested`, `rework_superseded`—, `approval.requested`, `approval.recorded`,
+  `work_item.completed`, `work_item.reactivated`, `work_item.cancelled`,
+  `archive.completed`, y eventos custom vía `record-event`). Cada evento
   lleva `schema_version`, `id`, `at` (RFC3339Nano UTC), `work_item`, `type`, `actor`,
   `data` y `correlation_id` (= `operation-id` cuando se usa).
 - El envelope JSON (`--json`) es el canal para que agentes/integraciones consuman
@@ -172,15 +216,14 @@ stateDiagram-v2
 ## Pendientes y fuentes
 
 - Pendientes o supuestos:
-  - Flujos de `cancelled` y propagación de `superseded` no existen como comandos en la
-    v1.0.0 (Pendiente, `CHANGELOG.md`).
   - El detalle de cómo el adapter/agente encadena los comandos (orquestación) vive en
     `.claude/agents/` y procedures; aquí se documenta el flujo del motor, no la política
     de cada agente (supuesto de alcance).
 - Fuentes verificadas:
   - `docs/SDD_WORKFLOW.md`, `docs/CLI.md`.
-  - `src/cli/internal/usecases/start_uc.go`, `src/cli/internal/domain/work_item.go`
-    (transiciones), `src/cli/internal/infra/{fs_repository.go, project_initializer.go,
-    artifact_manager.go}`.
-  - `.sdd/workflows/feature-standard.workflow.yaml`, `.sdd/registry/capabilities.yaml`,
-    `.sdd/schemas/event.schema.json`.
+  - `src/cli/internal/usecases/{start_uc.go, rework_uc.go, cancel_uc.go,
+    transition_helpers.go}`, `src/cli/internal/domain/work_item.go` (transiciones,
+    `ReworkPhase`, `Cancel`), `src/cli/internal/infra/{fs_repository.go,
+    fs_cancel_repository.go, project_initializer.go, artifact_manager.go}`.
+  - `.sdd/workflows/*.workflow.yaml`, `.sdd/registry/capabilities.yaml`,
+    `.sdd/schemas/event.schema.json`, `.sdd/procedures/onboard-project.md`.

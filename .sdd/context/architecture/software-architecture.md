@@ -16,8 +16,8 @@ regla de dependencia apuntando siempre hacia el dominio:
   repositorios de work items, workflows y config; servicio de artefactos; inspector de
   validación; catálogo/instalador de adapters; `Clock` e `IDGenerator`.
 - **`internal/usecases`** — orquestación de cada operación (start, begin, deliver,
-  approve, reject, complete, archive, status, next, validate, record-event, init,
-  adapters). Coordinan dominio + puertos sin conocer detalles de filesystem.
+  approve, reject, complete, archive, rework, cancel, status, next, validate,
+  record-event, init, adapters). Coordinan dominio + puertos sin conocer detalles de filesystem.
 - **`internal/infra`** — adaptadores concretos de los puertos: repositorio sobre
   filesystem con transacciones atómicas, validador de JSON Schema, gestor de artefactos,
   inicializador de proyecto, repositorio de adapters, seguridad de paths, reloj y
@@ -37,10 +37,11 @@ requiere red ni runtime externo.
 
 | Sistema o servicio | Propósito | Dirección de integración | Datos intercambiados |
 | --- | --- | --- | --- |
-| Filesystem del proyecto (`.sdd/`) | Fuente de verdad del estado: manifests, artefactos, eventos, locks, transacciones | Lectura y escritura | `manifest.yaml`, `artifacts/*.md`, `events.jsonl`, `.locks/`, `.transactions/` |
+| Filesystem del proyecto (`.sdd/`) | Fuente de verdad del estado: manifests, artefactos, eventos, locks, transacciones | Lectura y escritura | `manifest.yaml`, `artifacts/*.md`, `events.jsonl` en `work-items/{active,archive,cancelled}/`, `.locks/`, `.transactions/` |
 | Git | Versionado y fuente de verdad última del repositorio | Indirecta (el usuario/adapter commitea; la CLI **no** ejecuta Git) | Archivos de `.sdd/` versionados |
 | GitHub Releases | Distribución de binarios multiplataforma | Salida (publicación en release) / Entrada (instaladores descargan) | Binarios `sdd-cli`, `SHA256SUMS` |
-| Adapters de agente (Claude Code) | Materializar roles del contrato en una herramienta concreta | Salida (la CLI instala archivos) | `CLAUDE.md`, `.mcp.json`, `.claude/` (agents, hooks, settings) |
+| Adapters de agente (Claude Code) | Materializar roles del contrato en una herramienta concreta | Salida (la CLI instala archivos) | `CLAUDE.md`, `.mcp.json`, `.claude/` (agents, skills, commands, hooks, settings) |
+| Playwright CLI (`playwright-cli`, vía `npx --no-install`) | Verificación de UI de la capability `sdd.verify-ui` | Externa al motor: la invoca el agente verificador, no `sdd-cli` | Evidencia en `evidence/` del work item |
 | Agente/integración consumidora | Operar el motor y leer su estado | Bidireccional vía CLI + envelope JSON | Comandos con flags + respuestas `{success, data, error}` |
 | Artefacto externo (`--from-artifact`) | Empezar un workflow desde un documento ya hecho | Entrada (import con verificación SHA-256) | Archivo Markdown local + su hash |
 
@@ -70,10 +71,14 @@ local. La única noción de "autorización" es de **proceso**, no de identidad d
   un `id`), informado por flags `--actor-kind` / `--actor-id`.
 - Los **gates de aprobación** (`approve` / `reject`) exigen que el actor sea `human`
   (regla en el dominio: `ErrHumanActorRequired`). Un agente no puede aprobar su propio
-  trabajo.
+  trabajo. `rework` y `cancel` no exigen actor humano, pero sí `--reason` obligatorio,
+  que queda en el log de eventos.
 - El adapter de Claude Code publica `.claude/settings.local.json.example`; el archivo
   privado real queda ignorado por Git. Los hooks (`protect-sdd-paths.py`,
-  `protect-secrets.py`) actúan como salvaguardas del lado del agente.
+  `protect-secrets.py`) y los permisos `allow`/`ask`/`deny` de `.claude/settings.json`
+  (p. ej. `ask` para `git push`/`commit`/PRs y para subcomandos sensibles de
+  `playwright-cli`; `deny` para manifests, eventos y archivados) actúan como salvaguardas
+  del lado del agente.
 
 ## Integraciones y comunicación
 
@@ -84,9 +89,10 @@ local. La única noción de "autorización" es de **proceso**, no de identidad d
 - **Salida dual**: texto legible para humanos (stdout en éxito, stderr en error) o un
   **envelope JSON** único (`{ "success": bool, "data": ..., "error": {code, message,
   details} }`) para agentes/integraciones. Los códigos de error se mapean desde los
-  errores del dominio (`not_found`, `invalid_transition`, `validation_failed`,
-  `concurrent_modification`, `work_item_locked`, etc.). Exit code `0` en éxito, `1` en
-  error.
+  errores del dominio (`not_found`, `already_exists`, `already_archived`,
+  `archive_conflict`, `invalid_transition`, `invalid_input`, `invalid_arguments`,
+  `validation_failed`, `concurrent_modification`, `work_item_locked`, `internal_error`).
+  Exit code `0` en éxito, `1` en error.
 - **Contrato embebido**: el binario no llama a servicios; interpreta el contrato `.sdd/`
   (embebido y/o instalado en el proyecto). La validación por JSON Schema
   (`santhosh-tekuri/jsonschema`) se hace contra los schemas en `.sdd/schemas/`.
@@ -146,8 +152,9 @@ local. La única noción de "autorización" es de **proceso**, no de identidad d
   - No se identificó un mecanismo de logging estructurado más allá de `events.jsonl`.
 - Fuentes verificadas:
   - `src/cli/main.go`, `src/cli/go.mod`, `src/cli/cmd/root.go`, `src/cli/cmd/composition.go`.
-  - `src/cli/internal/infra/{fs_repository.go, path_security.go, schema_validator.go,
-    project_initializer.go}`.
+  - `src/cli/internal/infra/{fs_repository.go, fs_cancel_repository.go,
+    path_security.go, schema_validator.go, project_initializer.go}`.
+  - `src/adapters/claude-code/.claude/settings.json`, `src/.sdd/procedures/verify-ui.md`.
   - `src/cli/internal/domain/{work_item.go, workflow.go, event.go, validation.go}`.
   - `.sdd/schemas/*.json`, `.sdd/config.yaml`.
   - `docs/CLI.md`, `docs/SDD_WORKFLOW.md`, `README.md`, `CHANGELOG.md`,

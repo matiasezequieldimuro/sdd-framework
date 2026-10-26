@@ -44,9 +44,14 @@ Muchos comandos mutadores aceptan además:
 
 | Flag | Función |
 | --- | --- |
-| `--actor-kind` | Tipo de actor: `human`, `agent`, `cli`. |
+| `--actor-kind` | Tipo de actor: `human`, `agent`, `cli`, `system`. |
 | `--actor-id` | Identificador del actor (ej. `copilot`, `user`). |
 | `--operation-id` | Clave de idempotencia para reintentar sin duplicar. |
+
+Los defaults de actor varían por comando: `start` usa `human`/`user`; `begin`, `deliver`,
+`rework`, `cancel` y `record-event` usan `agent`/`agent`; `complete` y `archive` usan
+`cli`/`sdd`. `approve` y `reject` no aceptan `--actor-kind`: registran siempre un actor
+humano cuyo ID se pasa con `--by` (default `human`).
 
 ---
 
@@ -67,6 +72,8 @@ Muchos comandos mutadores aceptan además:
 | `reject` | Gate humano | Rechaza una fase para retrabajo | Sí |
 | `complete` | Transición | Completa una fase o el work item | Sí |
 | `archive` | Cierre | Mueve el expediente a `archive/` | Sí |
+| `rework` | Retrabajo | Reabre una fase cerrada y reemplaza sus descendientes | Sí |
+| `cancel` | Cierre | Cancela un work item activo y lo mueve a `cancelled/` | Sí |
 | `record-event` | Observabilidad | Agrega un evento custom | Sí |
 | `version` | Info | Muestra versión, commit y fecha de build | No |
 
@@ -85,7 +92,9 @@ sdd-cli init --dir /ruta/al/proyecto
 
 - Verifica que `.sdd/` no exista (no sobrescribe una instalación previa).
 - Copia los recursos embebidos, excluyendo fixtures de test.
-- Crea `work-items/active/` y `work-items/archive/`.
+- Crea `work-items/active/` y `work-items/archive/` (con `.gitkeep`) y
+  `work-items/.gitignore`, que excluye del control de versiones el estado de runtime del
+  motor (`.locks/` y `.transactions/`).
 - No inicializa Git.
 
 ### `sdd-cli adapters list`
@@ -104,9 +113,11 @@ sdd-cli adapters install claude-code --dir /ruta/al/proyecto
 ```
 
 - Exige una instalación `.sdd/` previa.
-- Comprueba todas las colisiones antes de escribir; falla sin sobrescribir si algún
-  archivo destino ya existe (no hay `--force` en la v1.0.0).
+- Comprueba todas las colisiones antes de escribir: falla con `already_exists`, sin
+  sobrescribir nada, si ya existe alguna de las raíces que publica (`CLAUDE.md`,
+  `.mcp.json` o el directorio `.claude/`, aunque esté vacío). No hay `--force` en la v1.0.0.
 - Publica `CLAUDE.md`, `.mcp.json` y `.claude/` (agents, skills, commands, hooks, rules).
+  El inventario está en [src/adapters/README.md](../src/adapters/README.md).
 - Instala `.claude/settings.local.json.example`; el archivo privado real queda ignorado.
 
 ---
@@ -147,7 +158,9 @@ Flags:
 | `--operation-id` | No | Vacío |
 
 El ID debe cumplir `^[a-z0-9]+(?:-[a-z0-9]+)*$` (ej. `feat-add-coupons`, `bug-123`).
-En un inicio normal, la primera fase (`user_prompt`) arranca automáticamente en
+Un ID usado por un work item cancelado queda reservado: `start` falla con
+`already_exists`. En un inicio normal, la fase de entrada que acepta `user_prompt`
+(`prd`, `change-request`, `issue` o `plan`, según el workflow) arranca automáticamente en
 `in_progress`: no hace falta un `begin` para ella. Ver
 [SDD_WORKFLOW.md §7](./SDD_WORKFLOW.md) para el inicio desde artefacto externo.
 
@@ -173,7 +186,8 @@ sdd-cli next feat-add-coupons
 ```
 
 Informa la próxima acción, priorizando: una fase `awaiting_approval`, luego
-`in_progress`, luego `ready`. Devuelve phase ID, estado, procedure, artefacto y si
+`in_progress`, luego `ready` y, por último, una fase `superseded` cuyas dependencias ya
+están satisfechas (tras un `rework`). Devuelve phase ID, estado, procedure, artefacto y si
 necesita aprobación. **No inicia la fase** ni aumenta la revisión.
 
 ### `sdd-cli validate [id]`
@@ -185,12 +199,17 @@ sdd-cli validate feat-add-coupons   # un work item
 
 | Invocación | Alcance |
 | --- | --- |
-| Sin ID | Config, schemas, workflows, templates, procedures y work items. |
+| Sin ID | Config, registry de capabilities, schemas, workflows, templates, procedures y work items de `active/` y `archive/`. |
 | Con ID | Manifest, workflow, approvals, artefactos, eventos y referencias. |
 
 Cada check reporta `status | category | code | target | message`, con estados
 `passed`, `warning` o `failed`. Un resultado inválido usa exit code `1`. Las
 advertencias no cambian el exit code. Es una consulta pura: no crea locks ni eventos.
+
+- Los checks `config.`, `registry.`, `workflow.` y `manifest.schema_version_supported`
+  fallan si el documento no declara el contrato `schema_version: "1.0"`.
+- Los work items de `cancelled/` no se inspeccionan. `status`, `next` y `validate` con el
+  ID de un work item cancelado fallan con `not_found` ("work item was cancelled").
 
 ---
 
@@ -207,7 +226,8 @@ sdd-cli begin feat-add-coupons \
 ```
 
 Permite `ready | rejected | superseded → in_progress`. Una fase `blocked` no puede
-comenzar.
+comenzar, y una `superseded` solo puede reiniciarse cuando sus dependencias vuelven a
+estar satisfechas.
 
 ### `sdd-cli deliver <id> --phase <fase>`
 
@@ -261,6 +281,36 @@ sdd-cli complete feat-add-coupons                # cierra el work item
 - Sin `--phase`: cierra el work item. Solo pasa a `completed` cuando todas las fases
   obligatorias están satisfechas, las opcionales no iniciadas se pueden omitir y toda
   fase opcional iniciada también terminó.
+- Con el work item `completed`, solo las fases opcionales (por ejemplo `archive`) admiten
+  `begin`/`deliver`/`approve`/`reject`/`complete --phase`.
+
+### `sdd-cli rework <id> --phase <fase> --reason <motivo>`
+
+```bash
+sdd-cli rework feat-add-coupons --phase specification \
+  --reason "Cambió el alcance de los cupones" \
+  --actor-kind agent --actor-id copilot \
+  --operation-id run:feat-add-coupons:spec:rework:001
+```
+
+| Flag | Requerido | Default |
+| --- | --- | --- |
+| `--phase`, `-p` | Sí | — |
+| `--reason` | Sí (no vacío) | — |
+| `--actor-kind` / `--actor-id` | No | `agent` / `agent` |
+| `--operation-id` | No | Vacío |
+
+- Precondiciones: work item en `active/` con estado `active` o `completed`, y fase en
+  `completed`, `approved` o `accepted`; si la fase está en otro estado, falla con
+  `invalid_transition`. Un work item archivado o cancelado no se encuentra (`not_found`).
+- La fase vuelve a `ready` (requiere un nuevo `begin`). Cada descendiente, en orden
+  topológico: `completed | approved | accepted | in_progress | awaiting_approval | rejected
+  → superseded`; `ready → blocked`; `blocked | not_applicable | superseded` sin cambios.
+- Si el work item estaba `completed`, vuelve a `active` (evento `work_item.reactivated`).
+- No modifica artefactos ni borra el historial de aprobaciones. Registra eventos
+  `phase.transitioned` con `cause` `rework_requested`/`rework_superseded` y el `reason`.
+- `data` en JSON: `{ "work_item": {...}, "superseded": <n>, "reactivated": <bool> }`, donde
+  `superseded` cuenta los descendientes modificados (incluye los re-bloqueados).
 
 ---
 
@@ -283,8 +333,37 @@ Resultado:
 ```
 
 El ID lógico no cambia; `status`/`validate` resuelven la ubicación archivada y el
-expediente queda inmutable. Ver la distinción fase `archive` vs comando `archive` en
+expediente queda inmutable. Archivar un work item ya archivado falla con
+`already_archived`. Ver la distinción fase `archive` vs comando `archive` en
 [SDD_WORKFLOW.md §8](./SDD_WORKFLOW.md).
+
+### `sdd-cli cancel <id> --reason <motivo>`
+
+```bash
+sdd-cli cancel feat-add-coupons --reason "Se descartó la iniciativa" \
+  --actor-kind human --actor-id matias \
+  --operation-id run:feat-add-coupons:cancel
+```
+
+| Flag | Requerido | Default |
+| --- | --- | --- |
+| `--reason` | Sí (no vacío) | — |
+| `--actor-kind` / `--actor-id` | No | `agent` / `agent` |
+| `--operation-id` | No | Vacío |
+
+- Precondición: work item `active`. Uno `completed` o ya cancelado falla con
+  `invalid_transition`; uno inexistente o archivado, con `not_found`.
+- Resultado (irreversible): el work item pasa a `cancelled`, sin cambiar el estado de sus
+  fases, y se mueve transaccionalmente:
+
+  ```text
+  .sdd/work-items/active/<id>  ->  .sdd/work-items/cancelled/<id>
+  ```
+
+- Registra el evento `work_item.cancelled` con el `reason`. El ID queda reservado (`start`
+  lo rechaza) y el expediente cancelado es opaco para `status`, `next` y `validate`.
+- Repetir con el mismo `--operation-id` devuelve el resultado ya aplicado.
+- `data` en JSON: `{ "work_item": {...}, "location": "cancelled" }`.
 
 ### `sdd-cli record-event <id>`
 
@@ -359,8 +438,10 @@ Error:
 | --- | --- |
 | `invalid_arguments` | Args, flags o comando incorrectos. |
 | `invalid_input` | ID, actor, path, schema o contrato inválido. |
-| `not_found` | Work item, workflow o fase inexistente. |
-| `already_exists` | Colisión al crear. |
+| `not_found` | Work item, workflow, fase o adapter inexistente, o work item cancelado. |
+| `already_exists` | Colisión al crear (incluye ID reservado por una cancelación y raíces del adapter ya existentes). |
+| `already_archived` | El work item ya está archivado. |
+| `archive_conflict` | Ubicación ambigua (mismo ID en más de una ubicación) o transacción de archive/cancel inconsistente. |
 | `invalid_transition` | Operación no permitida por el estado. |
 | `validation_failed` | El diagnóstico encontró inconsistencias. |
 | `concurrent_modification` | Revisión obsoleta. |
@@ -398,7 +479,7 @@ $SDD deliver fast-update-copy --dir "$PROJECT" --phase implementation \
   --actor-id copilot --operation-id run:impl:deliver:001
 
 # Repetir begin/deliver para verification.
-# Human code review requiere deliver -> approve.
+# human-code-review requiere begin -> deliver -> approve (gate humano).
 
 $SDD complete fast-update-copy --dir "$PROJECT" \
   --operation-id run:work-item:complete:001

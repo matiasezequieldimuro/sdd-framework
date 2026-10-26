@@ -95,7 +95,8 @@ escrito (`--from-artifact`), verificando su integridad con SHA-256.
   `prd` queda `not_applicable`, `specification` queda `awaiting_approval` (gate required),
   se registra `phase.bypassed_by_external_input` con el SHA-256.
 - `start` con id existente + mismo `--operation-id` → devuelve el item, sin duplicar.
-- `--from-artifact` sin `--phase` (o viceversa) → error `invalid_external_artifact`.
+- `--from-artifact` sin `--phase` (o viceversa) → `ErrInvalidExternalArtifact` (código
+  `invalid_input`).
 
 ## Reglas, contratos y restricciones
 

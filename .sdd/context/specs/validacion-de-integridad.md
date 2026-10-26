@@ -106,15 +106,32 @@ Las aprobaciones se validan con `approval.*`: `phase_unknown`, `policy_invalid`,
 - Referencias (`inspectReferences`): artefacto externo verificado por SHA-256
   (`reference.external_hash_matches`), disponibilidad (`reference.external_available` —
   **warning** si el archivo no está en esta máquina), `reference.external_regular`,
-  `reference.related_work_item_id_valid`, `reference.baseline_spec_exists` (specs bajo `specs/`).
+  `reference.related_work_item_id_valid`, `reference.baseline_spec_exists` (cada
+  `traceability.baseline_specs` es relativo a `.sdd/` y debe empezar con `specs/`, es decir
+  vivir en `.sdd/specs/`; las specs reconstruidas en `.sdd/context/specs/` no califican).
+- Artefactos (`category: artifact`): `artifact.required_exists`,
+  `artifact.front_matter_present`, `artifact.front_matter_schema_valid`,
+  `artifact.identity_valid`, `artifact.source_declared`, `artifact.source_available`.
+- Manifest/ubicación: `manifest.file_exists`, `manifest.id_matches_directory`,
+  `archive.manifest_status_matches_location`, `work_item.workflow_available`,
+  `work_item.semantics_valid`.
 - Manifest: además de `manifest.yaml_valid` y `manifest.schema_valid`, la check
   `manifest.schema_version_supported` exige `schema_version` 1.0 y se reporta aunque los schemas del
   proyecto estén desactualizados; no corta el resto de las checks del work item. Escenario verificable:
   un manifest con `schema_version` 0.1 deja `manifest.schema_version_supported` en `failed` y `status`
   falla con `invalid_input`.
-- Nivel proyecto: existencia de directorios/archivos requeridos, `config.yaml`
+- Nivel proyecto: existencia de directorios/archivos requeridos (`project.sdd_root_exists`,
+  `project.required_path_exists`, `project.required_path_type`,
+  `project.work_items_readable`, `project.work_item_entry_valid`; se exigen `schemas/`,
+  `workflows/`, `templates/`, `procedures/`, `registry/`, `work-items/active/`,
+  `work-items/archive/`, `config.yaml` y `registry/capabilities.yaml`), `config.yaml`
   (`config.yaml_valid`, `config.schema_version_supported`, `config.default_workflow_valid`,
-  `config.default_workflow_exists`), registry de capabilities (`registry.*`), y unicidad de
+  `config.default_workflow_exists`), registry de capabilities (`registry.yaml_valid`,
+  `registry.schema_version_supported`, `registry.capability_id_valid`,
+  `registry.capability_id_unique`, `registry.capability_title_present`,
+  `registry.procedure_reference_valid`, `registry.procedure_file_exists`), workflows
+  (`workflow.directory_readable`, `workflow.files_present`, `workflow.file_exists`,
+  `workflow.yaml_valid`, `workflow.schema_valid`, `workflow.semantics_valid`), y unicidad de
   ubicación de cada work item entre `active/` y `archive/` (`work_item.location_unique`,
   `archive.entry_valid`, `archive.id_unique`).
 
@@ -154,9 +171,9 @@ No aplica (especificación reconstruida).
   previo `completed`, vuelve a `active`) y `work_item.cancelled` (exige `active`, pasa a
   `cancelled`), además de `work_item.completed` y `archive.completed`. Un item reactivado por
   `rework` puede volver a validarse, completarse y archivarse. Ver `rework-y-cancelacion.md`.
-- **Pendiente/Desconocido**: no se enumeraron exhaustivamente los checks a nivel `project`
-  (existen más `project.*`); el detalle completo vive en `fs_validation_inspector.go`. Las
-  reglas del schema `workflow.schema.json`/`work-item.schema.json` no se transcribieron aquí.
+- **Pendiente/Desconocido**: los códigos listados se verificaron contra
+  `fs_validation_inspector.go` y el dominio en la v1.0.0; ante dudas, el código es la
+  referencia. Las reglas del schema `workflow.schema.json`/`work-item.schema.json` no se transcribieron aquí.
 
 ## Trazabilidad
 
