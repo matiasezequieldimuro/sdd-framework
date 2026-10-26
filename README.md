@@ -5,7 +5,7 @@ forma gobernada: en lugar de confiar en que un LLM "recuerde" en qué punto del 
 está, el proceso se modela como fases explícitas con aprobaciones humanas, artefactos y
 trazabilidad, y una CLI determinista se encarga de hacerlo cumplir.
 
-> Estado: **BETA** (`v0.1.0-beta`).
+> Estado: **Estable** (`v1.0.0`).
 
 ## Filosofía
 
@@ -67,7 +67,7 @@ sdd-cli --help                        # ver todos los comandos
 - [**Guía de instalación**](./docs/GUIA_INSTALACION.md) — instalar, actualizar y desinstalar en cada OS.
 - [**El workflow de SDD**](./docs/SDD_WORKFLOW.md) — escenarios, fases, gates, artefactos y fuentes de verdad.
 - [**Referencia de la CLI**](./docs/CLI.md) — comandos, flags, ejemplos y contrato de salida.
-- [**Changelog**](./CHANGELOG.md) — scope funcional de la BETA.
+- [**Changelog**](./CHANGELOG.md) — historial de versiones y alcance de cada release.
 
 ## Desarrollo
 
@@ -88,6 +88,6 @@ go test ./...
   binarios multiplataforma, genera `SHA256SUMS` y crea el GitHub Release.
 
 ```bash
-git tag v0.1.0-beta
-git push origin v0.1.0-beta
+git tag v1.0.0
+git push origin v1.0.0
 ```

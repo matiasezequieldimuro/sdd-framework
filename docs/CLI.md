@@ -1,6 +1,6 @@
 # Referencia de la CLI (`sdd-cli`)
 
-> Estado: **BETA** (contrato y CLI v0.1).
+> Estado: **Estable** (CLI `v1.0.0`, contrato `schema_version` 1.0).
 > Audiencia: usuarios y agentes que operan el motor SDD.
 > Alcance: comandos disponibles, flags, ejemplos y contrato de salida.
 
@@ -95,7 +95,7 @@ sdd-cli adapters list
 sdd-cli adapters list --json
 ```
 
-Lista los adapters incluidos en el binario. La BETA expone solo `claude-code`.
+Lista los adapters incluidos en el binario. La v1.0.0 expone solo `claude-code`.
 
 ### `sdd-cli adapters install <id>`
 
@@ -105,7 +105,7 @@ sdd-cli adapters install claude-code --dir /ruta/al/proyecto
 
 - Exige una instalación `.sdd/` previa.
 - Comprueba todas las colisiones antes de escribir; falla sin sobrescribir si algún
-  archivo destino ya existe (no hay `--force` en la BETA).
+  archivo destino ya existe (no hay `--force` en la v1.0.0).
 - Publica `CLAUDE.md`, `.mcp.json` y `.claude/` (agents, skills, commands, hooks, rules).
 - Instala `.claude/settings.local.json.example`; el archivo privado real queda ignorado.
 
@@ -301,7 +301,7 @@ transaccional, valida actor y schema, y puede ser idempotente con `--operation-i
 
 ```bash
 sdd-cli version
-# sdd-cli v0.1.0-beta (commit 91e5b13, built 2026-09-16T15:03:14Z)
+# sdd-cli v1.0.0 (commit abc1234, built 2026-10-26T15:03:14Z)
 ```
 
 ---

@@ -92,7 +92,7 @@ local. La única noción de "autorización" es de **proceso**, no de identidad d
   (`santhosh-tekuri/jsonschema`) se hace contra los schemas en `.sdd/schemas/`.
 - **Idempotencia**: `--operation-id` (1–128 chars, `[A-Za-z0-9._:-]`) permite reintentar
   un comando sin duplicar eventos ni reaplicar la transición.
-- **Sin MCP en la BETA**: la ejecución del motor vía Model Context Protocol está fuera de
+- **Sin MCP en la v1.0.0**: la ejecución del motor vía Model Context Protocol está fuera de
   alcance por ahora (el `.mcp.json` del adapter configura otros MCPs, no expone la CLI).
 
 ## Observabilidad y operación
@@ -142,7 +142,7 @@ local. La única noción de "autorización" es de **proceso**, no de identidad d
 - Pendientes o supuestos:
   - Observabilidad de tokens/costos: modelada pero no implementada como recolección real
     (Pendiente, confirmado en `CHANGELOG.md`).
-  - Ejecución vía MCP: Pendiente (fuera de alcance BETA).
+  - Ejecución vía MCP: Pendiente (fuera de alcance de la v1.0.0).
   - No se identificó un mecanismo de logging estructurado más allá de `events.jsonl`.
 - Fuentes verificadas:
   - `src/cli/main.go`, `src/cli/go.mod`, `src/cli/cmd/root.go`, `src/cli/cmd/composition.go`.

@@ -173,7 +173,7 @@ stateDiagram-v2
 
 - Pendientes o supuestos:
   - Flujos de `cancelled` y propagación de `superseded` no existen como comandos en la
-    BETA (Pendiente, `CHANGELOG.md`).
+    v1.0.0 (Pendiente, `CHANGELOG.md`).
   - El detalle de cómo el adapter/agente encadena los comandos (orquestación) vive en
     `.claude/agents/` y procedures; aquí se documenta el flujo del motor, no la política
     de cada agente (supuesto de alcance).

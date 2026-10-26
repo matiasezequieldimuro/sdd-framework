@@ -144,7 +144,7 @@ el motor en sí no almacena secretos.
 
 - Pendientes o supuestos:
   - `WorkItemStatus: cancelled` y la propagación de `superseded` están modelados pero sin
-    flujo/comando que los produzca en la BETA (Pendiente, confirmado en `CHANGELOG.md`).
+    flujo/comando que los produzca en la v1.0.0 (Pendiente, confirmado en `CHANGELOG.md`).
   - `observability.token_usage` está modelado en dominio y schema pero no se recolecta
     realmente (Pendiente).
   - No hay motor de migración de `schema_version`; el paso 0.1→1.0 es manual (ver

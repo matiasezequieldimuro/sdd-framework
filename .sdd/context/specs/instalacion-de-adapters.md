@@ -24,7 +24,7 @@ sources:
 El comando `adapters` gestiona el catálogo de **adapters de agente** embebidos en el binario
 (`embeds.DefaultAdapterResources`, `//go:embed all:default_adapters`) y los materializa sobre
 un proyecto ya inicializado. Un adapter traduce los roles del contrato SDD a una herramienta
-concreta de codificación. En la BETA el único adapter provisto es **`claude-code`**
+concreta de codificación. En la v1.0.0 el único adapter provisto es **`claude-code`**
 (`src/adapters/claude-code/`), que aporta `CLAUDE.md`, `.mcp.json` y el árbol `.claude/`
 (agents, hooks, settings).
 
@@ -91,7 +91,7 @@ concreta de codificación. En la BETA el único adapter provisto es **`claude-co
 No aplica (especificación reconstruida).
 
 - **Pendiente/Desconocido**: el conjunto exacto de adapters disponibles se deriva en runtime
-  del contenido embebido; en la BETA solo se confirma `claude-code`. La instalación **no** es
+  del contenido embebido; en la v1.0.0 solo se confirma `claude-code`. La instalación **no** es
   incremental ni actualiza un adapter ya presente (falla por colisión); no se observó un flujo
   de "update/upgrade" de adapters.
 

@@ -17,11 +17,11 @@ Separa dos responsabilidades que normalmente se mezclan:
   humanos, prepara artefactos y registra evidencia.
 
 Está pensado para ser "agent-agnostic": el mismo contrato puede operarse desde distintas
-herramientas de codificación mediante *adapters* (en la BETA, Claude Code). El público
+herramientas de codificación mediante *adapters* (en la v1.0.0, Claude Code). El público
 objetivo es el propio autor y desarrolladores que quieran delegar tareas a la IA con un
 proceso auditable y portable.
 
-> Estado: **BETA** (`v0.1.0-beta`).
+> Estado: **Estable** (`v1.0.0`).
 
 ## Alcance y límites
 
@@ -42,7 +42,7 @@ proceso auditable y portable.
     qué modelo usar. Eso lo hacen los agentes/personas.
   - Este repositorio es el MOTOR/template, **no** un proyecto consumidor: no se crean
     work items reales aquí; se ajusta el motor.
-- Límites conocidos (fuera de alcance en la BETA, según `CHANGELOG.md`):
+- Límites conocidos (fuera de alcance en la v1.0.0, según `CHANGELOG.md`):
   - Retrabajo semántico e invalidación transitoria (`superseded` no se propaga
     automáticamente hacia atrás; hoy requiere edición manual del manifest).
   - Comando de cancelación explícita (`cancelled` está modelado pero sin comando público).
@@ -104,15 +104,15 @@ proceso auditable y portable.
 - `docs/SDD_WORKFLOW.md` — escenarios, fases, gates, artefactos y fuentes de verdad.
 - `docs/CLI.md` — referencia de comandos, flags, ejemplos y contrato de salida.
 - `docs/GUIA_INSTALACION.md` — instalación, actualización y desinstalación por OS.
-- `CHANGELOG.md` — scope funcional de la BETA y lo que queda fuera de alcance.
+- `CHANGELOG.md` — historial de versiones, alcance de cada release y lo que queda fuera de alcance.
 - `AGENTS.md` — rol/objetivo del asistente en el diseño del framework.
 - Contexto de arquitectura: `.sdd/context/architecture/` (este mismo conjunto de docs).
 
 ## Estado y pendientes
 
-- Estado actual: **BETA `v0.1.0-beta`** (primera versión pública). El núcleo del motor,
-  el contrato y el adapter de Claude Code están implementados y cubiertos por tests + CI.
-  El objetivo de la BETA es validar el núcleo del motor y su ergonomía con uso real.
+- Estado actual: **Estable `v1.0.0`** (primera versión mayor; sucede a `v0.1.0-beta`). El
+  núcleo del motor, el contrato (`schema_version` 1.0) y el adapter de Claude Code están
+  implementados y cubiertos por tests + CI.
 - Pendientes o preguntas abiertas (verificados en `CHANGELOG.md`):
   - Propagación automática de `superseded` (retrabajo semántico) — hoy manual.
   - Comando público de cancelación (`cancelled` modelado, sin comando).

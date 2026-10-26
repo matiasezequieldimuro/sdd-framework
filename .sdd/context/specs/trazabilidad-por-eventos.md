@@ -127,7 +127,7 @@ No aplica (especificación reconstruida).
 - **Pendiente/Desconocido**: `record-event` no expone un flag para poblar `data` arbitrario:
   el `RecordEventInput.Data` existe en el use case pero el comando solo inyecta `message`. La
   observabilidad de tokens/costos (`observability.token_usage`) está modelada en el manifest y
-  el schema pero no se recolecta como eventos reales en la BETA.
+  el schema pero no se recolecta como eventos reales en la v1.0.0.
 
 ## Trazabilidad
 

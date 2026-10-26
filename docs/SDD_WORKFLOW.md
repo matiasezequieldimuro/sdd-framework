@@ -1,6 +1,6 @@
 # El workflow de SDD
 
-> Estado: **BETA**.
+> Estado: **Estable** (`v1.0.0`).
 > Audiencia: cualquier persona que quiera entender cómo trabaja el framework SDD.
 > Alcance: escenarios modelados, fases, gates, artefactos y fuentes de verdad.
 
@@ -98,7 +98,7 @@ toda fase posterior se ejecuta sin excepción.
 
 ## 5. Escenarios principales (workflows con fases)
 
-Estos escenarios sí tienen múltiples fases con aprobación obligatoria. En la BETA el
+Estos escenarios sí tienen múltiples fases con aprobación obligatoria. En la v1.0.0 el
 motor implementa cinco workflows:
 
 | Workflow | Para qué | Entry points | Flujo principal |

@@ -6,7 +6,7 @@
 sdd-framework/
 ├── AGENTS.md                     # Rol/objetivo del asistente en el diseño del framework
 ├── README.md                    # Visión general, filosofía, instalación, desarrollo
-├── CHANGELOG.md                 # Scope funcional de la BETA
+├── CHANGELOG.md                 # Historial de versiones y alcance
 ├── .mcp.json                    # Config MCP del propio repo
 ├── docs/
 │   ├── CLI.md                   # Referencia de comandos y contrato de salida

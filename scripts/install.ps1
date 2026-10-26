@@ -11,7 +11,7 @@
 
 .NOTES
     Environment overrides:
-      $env:SDD_VERSION      Install a specific tag (e.g. v0.1.0-beta). Default: latest release.
+      $env:SDD_VERSION      Install a specific tag (e.g. v1.0.0). Default: latest release.
       $env:SDD_INSTALL_DIR  Target directory. Default: $env:LOCALAPPDATA\Programs\sdd-cli
 #>
 
